@@ -8,7 +8,6 @@ import config
 # 히스토리 관리 함수
 def manage_history(new_title):
     history = []
-    # 파일이 없으면 생성
     if not os.path.exists(config.HISTORY_FILE):
         with open(config.HISTORY_FILE, "w", encoding="utf-8") as f:
             pass
@@ -17,9 +16,8 @@ def manage_history(new_title):
         history = [line.strip() for line in f if line.strip()]
 
     if new_title in history:
-        return True # 이미 존재함 (중복)
+        return True 
 
-    # 새 타이틀 추가 및 30개 유지
     history.append(new_title)
     if len(history) > 30:
         history = history[-30:]
@@ -29,7 +27,7 @@ def manage_history(new_title):
             f.write(title + "\n")
     return False
 
-async def get_borussia_news(ignore_history=False): # 테스트를 위해 ignore_history 옵션 추가
+async def get_borussia_news(ignore_history=False):
     async with async_playwright() as p:
         print("🚀 브라우저 실행 중...")
         browser = await p.chromium.launch(headless=True)
@@ -44,39 +42,30 @@ async def get_borussia_news(ignore_history=False): # 테스트를 위해 ignore_
             await page.goto("https://www.borussia.de/news", wait_until="networkidle", timeout=60000)
         except Exception as e:
             print(f"⚠️ 페이지 로딩 시간 초과 또는 에러: {e}")
-            # 에러가 나도 일단 진행해봅니다 (일부 로딩됐을 수 있음)
 
-        # 스크롤을 좀 더 확실하게 여러 번 내림
         for _ in range(3):
             await page.mouse.wheel(0, 1500)
             await asyncio.sleep(1)
 
-        # 디버깅: 현재 페이지 타이틀 확인
-        page_title = await page.title()
-        print(f"🔎 접속된 페이지 제목: {page_title}")
-
         list_content = await page.content()
         list_soup = BeautifulSoup(list_content, 'html.parser')
         
-        # 선택자 확인
         articles = list_soup.select('a[href^="/news/"]')
         print(f"📊 발견된 기사 링크 수: {len(articles)}개")
 
         if len(articles) == 0:
-            print("❌ 기사를 하나도 못 찾았습니다. 선택자(a[href^='/news/'])가 맞지 않거나 페이지가 덜 로딩되었습니다.")
+            print("❌ 기사를 하나도 못 찾았습니다.")
             await browser.close()
             return []
 
         final_task_list = []
 
-        # 상위 5개만 검토
         for i, a in enumerate(articles[:5]):
             title = a.select_one('h3').get_text(strip=True) if a.select_one('h3') else "제목 없음"
             full_url = f"https://www.borussia.de{a['href']}"
             
             print(f"   [{i+1}] 검토 중: {title}")
 
-            # ignore_history가 True면 중복 체크를 건너뜀 (무조건 수집)
             if not ignore_history:
                 if manage_history(title):
                     print(f"      ⏭️ [스킵] 이미 히스토리에 존재함")
@@ -89,29 +78,30 @@ async def get_borussia_news(ignore_history=False): # 테스트를 위해 ignore_
                 print(f"      ✅ 상세 페이지 이동 중...")
                 await page.goto(full_url, wait_until="domcontentloaded", timeout=60000)
                 
-                # 본문 대기
-                try: await page.wait_for_selector("article", timeout=5000)
+                # 본문 대기 (혹시 모르니)
+                try: await page.wait_for_selector("article", timeout=3000)
                 except: pass
 
-                # 본문 추출 시도
+                # === [사용자 요청 수정 부분] ===
                 content = ""
-                content_el = await page.query_selector("article")
-                if content_el: 
-                    content = (await content_el.inner_text()).strip()
                 
-                if not content:
-                    content_el = await page.query_selector(".news-detail__content")
-                    if content_el: content = (await content_el.inner_text()).strip()
-
-                if not content:
-                    # 최후의 수단: 본문이 없으면 그냥 body 전체 긁기 (테스트용)
-                    content = await page.evaluate("() => document.body.innerText")
-                    content = content[:500] + "..." # 너무 기니까 자르기
+                # 전략: 전체 텍스트 중 뉴스 섹션 추정 영역
+                # 일단 전체 텍스트를 가져옵니다.
+                content = await page.evaluate("() => document.body.innerText")
+                
+                # 필요 없는 상/하단 문구 제거 (Footer 부분 잘라내기)
+                # "ZURÜCK ZUR NEWSÜBERSICHT" (뉴스 목록으로 돌아가기) 버튼이 나오면 그 뒤는 광고나 푸터이므로 버립니다.
+                if "ZURÜCK ZUR NEWSÜBERSICHT" in content:
+                    content = content.split("ZURÜCK ZUR NEWSÜBERSICHT")[0]
+                
+                # 불필요한 공백 정리
+                content = content.strip()
+                # ==============================
 
                 # 이미지 캡처
                 clean_title = re.sub(r'[\\/*?:"<>|]', "", title).strip()
                 image_path = f"{config.IMAGE_DIR}/{clean_title}.png"
-                await page.screenshot(path=image_path, clip={'x': 40, 'y': 100, 'width': 1200, 'height': 600})
+                await page.screenshot(path=image_path, clip={'x': 0, 'y': 0, 'width': 1280, 'height': 800})
 
                 final_task_list.append({
                     'title': title,
@@ -119,11 +109,11 @@ async def get_borussia_news(ignore_history=False): # 테스트를 위해 ignore_
                     'content': content,
                     'image_path': image_path
                 })
+                # 이제 503이 아니라 실제 본문 길이가 찍힐 겁니다.
                 print(f"      📄 수집 완료 (본문 길이: {len(content)})")
 
             except Exception as e:
                 print(f"      ❌ 상세 페이지 처리 에러: {e}")
 
         await browser.close()
-
         return final_task_list
