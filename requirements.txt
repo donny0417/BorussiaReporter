@@ -1,0 +1,7 @@
+playwright==1.49.1
+beautifulsoup4==4.12.3
+requests==2.32.3
+python-dotenv==1.0.1
+langchain-google-genai==2.0.9
+langchain-core==0.3.33
+nest_asyncio==1.6.0
