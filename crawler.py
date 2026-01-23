@@ -1,4 +1,3 @@
-%%writefile crawler.py
 import os
 import re
 import asyncio
@@ -126,4 +125,5 @@ async def get_borussia_news(ignore_history=False): # 테스트를 위해 ignore_
                 print(f"      ❌ 상세 페이지 처리 에러: {e}")
 
         await browser.close()
+
         return final_task_list
