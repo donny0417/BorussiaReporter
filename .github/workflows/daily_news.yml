@@ -3,7 +3,7 @@ name: Borussia News Auto Poster
 on:
   schedule:
     # 매일 한국 시간 오전 9시(UTC 00:00)에 자동 실행
-    - cron: '30 00 * * *'
+    - cron: '5 2 * * *'
   workflow_dispatch: # 이 설정이 있어야 "Run workflow" 버튼이 생깁니다!
 
 jobs:
