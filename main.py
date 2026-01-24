@@ -19,8 +19,9 @@ async def main():
     for news in news_list:
         try:
             translated_text = translator.translate_article(news['content'])
+            final_content = f"{translated_text}\n\n---\n원문 출처: {news['link']}"
             ready_to_post.append({
-                'translated_text': translated_text,
+                'translated_text': final_content,
                 'image_path': news['image_path']
             })
             print(f"✅ 번역 완료: {news['title']}")
@@ -44,4 +45,5 @@ async def main():
                 time.sleep(10)
 
 if __name__ == "__main__":
+
     asyncio.run(main())
