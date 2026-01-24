@@ -101,7 +101,7 @@ async def get_borussia_news(ignore_history=False):
                 # 이미지 캡처
                 clean_title = re.sub(r'[\\/*?:"<>|]', "", title).strip()
                 image_path = f"{config.IMAGE_DIR}/{clean_title}.png"
-                await page.screenshot(path=image_path, clip={'x': 0, 'y': 0, 'width': 1280, 'height': 800})
+                await page.screenshot(path=image_path, clip={'x': 40, 'y': 100, 'width': 1200, 'height': 600})
 
                 final_task_list.append({
                     'title': title,
@@ -117,3 +117,4 @@ async def get_borussia_news(ignore_history=False):
 
         await browser.close()
         return final_task_list
+
