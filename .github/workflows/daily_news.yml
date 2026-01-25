@@ -2,48 +2,48 @@ name: Borussia News Auto Poster
 
 on:
   schedule:
-    - cron: '28 14 * * *' 
-  workflow_dispatch: # 수동 실행 버튼 활성화
-
-permissions:
-  contents: write
+    - cron: '00 21 * * *'
+  workflow_dispatch: # 이 설정이 있어야 "Run workflow" 버튼이 생깁니다!
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    # GitHub Actions가 코드를 수정(processed_titles.txt 업데이트)할 수 있는 권한 부여
+    permissions:
+      contents: write
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        playwright install chromium
+        playwright install-deps
 
-      # 2. Playwright 브라우저 및 필수 라이브러리 설치 (가장 안정적인 방식)
-      - name: Install Playwright Chromium
-        run: playwright install --with-deps chromium
+    - name: Run Main Script
+      env:
+        # GitHub Secrets에 등록한 변수들을 파이썬 환경 변수로 연결
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+        NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+        NAVER_REFRESH_TOKEN: ${{ secrets.NAVER_REFRESH_TOKEN }}
+        NAVER_CLUB_ID: ${{ secrets.NAVER_CLUB_ID }}
+        NAVER_MENU_ID: ${{ secrets.NAVER_MENU_ID }}
+      run: python main.py
 
-      - name: Run News Bot
-        env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
-          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
-          NAVER_CLUB_ID: ${{ secrets.NAVER_CLUB_ID }}
-          NAVER_MENU_ID: ${{ secrets.NAVER_MENU_ID }}
-        run: python main.py
-
-      # 3. 변경사항 저장 (중복 포스팅 방지용 txt 파일 업데이트)
-      - name: Commit and Push changes
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add processed_titles.txt || echo "No file to add"
-          git commit -m "chore: update processed news list [skip ci]" || echo "No changes to commit"
-          git push origin main
+    - name: Commit and Push History
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add processed_titles.txt
+        # 변경사항이 있을 때만 커밋 (중복 방지용 히스토리 업데이트)
+        git commit -m "Update news history [skip ci]" || echo "No changes to commit"
+        git push
