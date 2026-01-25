@@ -2,7 +2,7 @@ name: Borussia News Auto Poster
 
 on:
   schedule:
-    - cron: '2 14 * * *' 
+    - cron: '5 14 * * *' 
   workflow_dispatch: # 수동 실행 버튼 활성화
 
 # 1. 권한을 최상단으로 이동 (ChatGPT 분석 반영)
