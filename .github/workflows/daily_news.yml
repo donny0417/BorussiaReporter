@@ -2,47 +2,33 @@ name: Borussia News Auto Poster
 
 on:
   schedule:
-    # 매일 한국 시간 오전 9시(UTC 00:00)에 자동 실행
-    - cron: '50 13 * * *'
-  workflow_dispatch: # 이 설정이 있어야 "Run workflow" 버튼이 생깁니다!
+    - cron: '0 2 * * *' # 한국 시간 11시
+  workflow_dispatch:
+
+# 지적하신 대로 최상단(Workflow 레벨)으로 이동
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    # GitHub Actions가 코드를 수정(processed_titles.txt 업데이트)할 수 있는 권한 부여
-    permissions:
-      contents: write
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      
+      # (기존 파이썬 설치 및 라이브러리 설치 단계들...)
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-        playwright install chromium
-        playwright install-deps
-
-    - name: Run Main Script
-      env:
-        # GitHub Secrets에 등록한 변수들을 파이썬 환경 변수로 연결
-        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-        NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
-        NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
-        NAVER_REFRESH_TOKEN: ${{ secrets.NAVER_REFRESH_TOKEN }}
-        NAVER_CLUB_ID: ${{ secrets.NAVER_CLUB_ID }}
-        NAVER_MENU_ID: ${{ secrets.NAVER_MENU_ID }}
-      run: python main.py
-
-    - name: Commit and Push History
-      run: |
-        git config --global user.name "github-actions[bot]"
+      - name: Install Playwright Browsers & Deps
+        run: playwright install --with-deps chromium
+        
+      # (뉴스 수집 및 업로드 실행...)
+      
+      - name: Commit and Push Changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add processed_titles.txt
+          git commit -m "Update history [skip ci]" || echo "No changes to commit"
+          git push
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add processed_titles.txt
         # 변경사항이 있을 때만 커밋 (중복 방지용 히스토리 업데이트)
