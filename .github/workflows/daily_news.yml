@@ -2,35 +2,49 @@ name: Borussia News Auto Poster
 
 on:
   schedule:
-    - cron: '0 14 * * *' 
-  workflow_dispatch:
+    - cron: '2 14 * * *' 
+  workflow_dispatch: # 수동 실행 버튼 활성화
 
-# 지적하신 대로 최상단(Workflow 레벨)으로 이동
+# 1. 권한을 최상단으로 이동 (ChatGPT 분석 반영)
 permissions:
   contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      # (기존 파이썬 설치 및 라이브러리 설치 단계들...)
 
-      - name: Install Playwright Browsers & Deps
-        run: playwright install --with-deps chromium
-        
-      # (뉴스 수집 및 업로드 실행...)
-      
-      - name: Commit and Push Changes
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add processed_titles.txt
-          git commit -m "Update history [skip ci]" || echo "No changes to commit"
-          git push
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add processed_titles.txt
-        # 변경사항이 있을 때만 커밋 (중복 방지용 히스토리 업데이트)
-        git commit -m "Update news history [skip ci]" || echo "No changes to commit"
-        git push
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 2. Playwright 브라우저 및 필수 라이브러리 설치 (가장 안정적인 방식)
+      - name: Install Playwright Chromium
+        run: playwright install --with-deps chromium
+
+      - name: Run News Bot
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          NAVER_CLUB_ID: ${{ secrets.NAVER_CLUB_ID }}
+          NAVER_MENU_ID: ${{ secrets.NAVER_MENU_ID }}
+        run: python main.py
+
+      # 3. 변경사항 저장 (중복 포스팅 방지용 txt 파일 업데이트)
+      - name: Commit and Push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add processed_titles.txt || echo "No file to add"
+          git commit -m "chore: update processed news list [skip ci]" || echo "No changes to commit"
+          git push origin main
