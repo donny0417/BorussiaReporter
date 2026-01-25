@@ -2,7 +2,7 @@ name: Borussia News Auto Poster
 
 on:
   schedule:
-    - cron: '0 2 * * *' # 한국 시간 11시
+    - cron: '0 14 * * *' 
   workflow_dispatch:
 
 # 지적하신 대로 최상단(Workflow 레벨)으로 이동
