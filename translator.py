@@ -35,6 +35,24 @@ def translate_article(raw_content):
 3. 강조: 기사 맥락상의 핵심 정보는 **텍스트**로 표기하세요.
 4. 구분선: 주제가 바뀔 때 ---를 삽입하세요.
 
+[뉴스 분류 및 태그 출력 규칙 (Strict Rules)]
+기사 제목의 맨 앞에 반드시 아래 카테고리 중 하나를 <태그> 형태로 붙여주세요.
+
+- <경기리뷰>: 경기 종료 후 요약 및 분석 (Nachbericht, Spielbericht)
+- <경기프리뷰>: 다음 경기 정보 및 통계 (Vorbericht, Fakten)
+- <인터뷰>: 선수나 관계자의 인터뷰 (Interview, Stimmen)
+- <기자회견>: 공식 기자회견 (Pressekonferenz, PK)
+- <오피셜>: 재계약, 계약, 영입, 이적 등 공식 발표 (Transfer, Vertrag, Offiziell)
+- <선수단>: 부상 보고 및 선수단 소집 현황 (Personal, Kader, Update)
+- <티켓/예매>: 티켓 판매 및 구장 입장 안내 (Vorverkauf, Tickets)
+- <일정/공지>: 훈련, 경기 시간, 구단 일반 공지 (Termin, Training, Infos)
+- <유스팀>: 유스팀(FohlenStall) 소식 (U23, FohlenStall)
+- <여자팀>: 여성팀 소식 (Frauen)
+- <기타>: 위 분류에 해당하지 않는 기타 소식
+
+출력 형식 예시:
+<선수단> '주장 복귀' 보루시아, 다가오는 원정 경기 소집 명단 발표
+
 [Strict Translation Guidelines]
 1. 객관성 유지: "열광적인", "충격적인" 등의 감정적 형용사를 지양하고 원문의 사실 보도 톤을 그대로 유지하세요.
 2. 정확한 고유명사 병기: 외래어 표기법을 준수하되, 첫 언급 시 반드시 원어명을 병기하세요. 
