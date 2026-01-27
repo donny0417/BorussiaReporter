@@ -29,7 +29,7 @@ def upload_single_article(post_data, access_token):
     subject = urllib.parse.quote(clean_title.replace('"', "'"))
 
     formatted_body = raw_body.replace('"', "'")
-    formatted_body = re.sub(r'(^|\n)[*-]\s+(.*)', r'\1&nbsp;&nbsp;• \2', formatted_body)
+    formatted_body = re.sub(r'(^|\n)-\s+(.*)', r'\1&nbsp;&nbsp;• \2', formatted_body)
     formatted_body = re.sub(r'###\s*(.*)', r'<br><b>[ \1 ]</b>', formatted_body)
     formatted_body = formatted_body.replace('---', '<hr>')
     formatted_body = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', formatted_body)
