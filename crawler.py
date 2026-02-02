@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 import config
 
 # 히스토리 관리 함수
-'''
 def manage_history(new_title):
     history = []
     if not os.path.exists(config.HISTORY_FILE):
@@ -27,29 +26,7 @@ def manage_history(new_title):
         for title in history:
             f.write(title + "\n")
     return False
-'''
-def manage_history(new_titles):
-    # 1. 기존 이력 읽기
-    history = []
-    if os.path.exists(config.HISTORY_FILE):
-        with open(config.HISTORY_FILE, "r", encoding="utf-8") as f:
-            history = [line.strip() for line in f if line.strip()]
 
-    # 2. 중복되지 않은 새 제목들만 골라내기
-    unique_new = [t for t in new_titles if t not in history]
-    
-    if not unique_new:
-        return False # 추가할 게 없으면 종료
-
-    # 3. 합치고 30개 유지
-    history.extend(unique_new)
-    history = history[-30:]
-
-    # 4. 저장
-    with open(config.HISTORY_FILE, "w", encoding="utf-8") as f:
-        f.write("\n".join(history) + "\n")
-    
-    return True
 
 async def get_borussia_news(ignore_history=False):
     async with async_playwright() as p:
