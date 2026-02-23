@@ -44,7 +44,7 @@ async def get_borussia_news(ignore_history=False):
         except Exception as e:
             print(f"⚠️ 페이지 로딩 시간 초과 또는 에러: {e}")
 
-        for _ in range(10):
+        for _ in range(5):
             await page.mouse.wheel(0, 1500)
             await asyncio.sleep(1)
 
