@@ -20,7 +20,7 @@ async def main():
         try:
             translated_text = translator.translate_article(news['content'])
             final_content = f"{translated_text}\n\n---\n원문 출처: {news['link']}"
-            ready_to_post.append({
+            ready_to_post.insert(0, {
                 'translated_text': final_content,
                 'image_path': news['image_path']
             })
