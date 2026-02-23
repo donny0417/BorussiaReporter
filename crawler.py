@@ -44,7 +44,7 @@ async def get_borussia_news(ignore_history=False):
         except Exception as e:
             print(f"⚠️ 페이지 로딩 시간 초과 또는 에러: {e}")
 
-        for _ in range(3):
+        for _ in range(10):
             await page.mouse.wheel(0, 1500)
             await asyncio.sleep(1)
 
@@ -61,7 +61,7 @@ async def get_borussia_news(ignore_history=False):
 
         final_task_list = []
 
-        for i, a in enumerate(articles[:5]):
+        for i, a in enumerate(articles[:10]):
             title = a.select_one('h3').get_text(strip=True) if a.select_one('h3') else "제목 없음"
             full_url = f"https://www.borussia.de{a['href']}"
             
