@@ -18,7 +18,7 @@ rate_limiter = InMemoryRateLimiter(
 # 이렇게 해야 기사가 100개여도 모델 연결은 1번만 하고, rate_limiter가 정확히 동작합니다.
 llm = ChatGoogleGenerativeAI(
     model='gemini-2.5-flash', 
-    temperature=0.7, 
+    temperature=0.2, 
     rate_limiter=rate_limiter
 )
 
