@@ -65,6 +65,15 @@ def translate_article(raw_content):
 4. 원문 충실도: 제공된 텍스트 외에 외부 지식을 임의로 덧붙이거나(Hallucination), 기사의 내용을 생략하지 마세요. 줄바꿈(Enter), 문단 구분 등 원문의 시각적 구조를 그대로 유지하여 출력하세요 
 5. 불필요한 노이즈 제거: 본문과 무관한 웹사이트 UI 텍스트(쿠키 설정, 쇼핑몰 링크, SNS 공유 버튼 안내 등)는 삭제하세요.
 6. 전문 기자 문체: "~라고 밝혔습니다", "~로 확인되었습니다", "~할 것으로 보입니다" 등 중립적이고 전문적인 통신원 문체를 사용하세요.
+
+[Additional Information]
+월드컵 관련 표현:
+- Sechzehntelfinale : 32강
+- Achtelfinale : 16강
+- Viertelfinale : 8강
+- Halbfinale : 4강 (준결승)
+- Finale : 결승전
+
     '''),
         HumanMessage(content=raw_content),
     ]
