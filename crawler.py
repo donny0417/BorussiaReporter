@@ -184,13 +184,19 @@ async def get_borussia_news(ignore_history=False):
                 except Exception:
                     pass
 
+                clean_title = re.sub(r'[\\/*?:"<>|]', "", title).strip()
+
+                # 리드 이미지 캡처 (기존 방식 그대로: 쿠키 동의 처리/스크롤을 하기 전, 페이지 로드 직후 상단 고정 영역).
+                # 쿠키 동의창을 닫으면 상단에 프로모션 배너가 노출되며 레이아웃이 바뀌어 엉뚱한 영역이 찍히므로,
+                # 그 부수효과가 생기기 전에 먼저 캡처한다.
+                image_path = f"{config.IMAGE_DIR}/{clean_title}.png"
+                await page.screenshot(path=image_path, clip={'x': 40, 'y': 100, 'width': 1200, 'height': 600})
+
                 await dismiss_cookie_consent(page)
 
                 for _ in range(6):
                     await page.mouse.wheel(0, 1200)
                     await asyncio.sleep(0.3)
-
-                clean_title = re.sub(r'[\\/*?:"<>|]', "", title).strip()
 
                 # 본문 중간 이미지/영상 위치에 마커 삽입 + 수집
                 media = []
@@ -234,13 +240,6 @@ async def get_borussia_news(ignore_history=False):
                 # 불필요한 공백 정리
                 content = content.strip()
                 # ==============================
-
-                # 리드 이미지 캡처 (기존 방식 유지: 상단 고정 영역. 실제로는 제목보다 DOM상 앞에 있어 마커 범위 밖)
-                # 위에서 지연 로딩 이미지 확보를 위해 페이지를 스크롤했으므로, 고정 좌표 캡처 전에 맨 위로 되돌린다.
-                await page.evaluate("() => window.scrollTo(0, 0)")
-                await asyncio.sleep(0.3)
-                image_path = f"{config.IMAGE_DIR}/{clean_title}.png"
-                await page.screenshot(path=image_path, clip={'x': 40, 'y': 100, 'width': 1200, 'height': 600})
 
                 final_task_list.append({
                     'title': title,
