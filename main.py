@@ -22,7 +22,9 @@ async def main():
             final_content = f"{translated_text}\n\n---\n원문 출처: {news['link']}"
             ready_to_post.insert(0, {
                 'translated_text': final_content,
-                'image_path': news['image_path']
+                'image_path': news['image_path'],
+                'images': news.get('images', []),
+                'videos': news.get('videos', []),
             })
             print(f"✅ 번역 완료: {news['title']}")
         except Exception as e:
