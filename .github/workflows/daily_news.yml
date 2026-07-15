@@ -35,8 +35,8 @@ jobs:
         NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
         NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
         NAVER_REFRESH_TOKEN: ${{ secrets.NAVER_REFRESH_TOKEN }}
-        NAVER_CLUB_ID: ${{ secrets.NAVER_CLUB_ID_TEST }}  # TEMP-TEST-ONLY, revert before merge
-        NAVER_MENU_ID: ${{ secrets.NAVER_MENU_ID_TEST }}  # TEMP-TEST-ONLY, revert before merge
+        NAVER_CLUB_ID: ${{ secrets.NAVER_CLUB_ID }}
+        NAVER_MENU_ID: ${{ secrets.NAVER_MENU_ID }}
       run: python main.py
 
     - name: Commit and Push History
