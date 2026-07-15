@@ -3,8 +3,7 @@ import re
 import asyncio
 from playwright.async_api import async_playwright
 from bs4 import BeautifulSoup
-# 만약 config 파일이 따로 없다면 테스트용 변수로 대체하세요.
-import config 
+import config
 
 # 히스토리 관리 함수
 def manage_history(new_title):
@@ -12,22 +11,26 @@ def manage_history(new_title):
     if not os.path.exists(config.HISTORY_FILE):
         with open(config.HISTORY_FILE, "w", encoding="utf-8") as f:
             pass
+
     with open(config.HISTORY_FILE, "r", encoding="utf-8") as f:
         history = [line.strip() for line in f if line.strip()]
-    
+
     if new_title in history:
         return True
-        
+
     history.append(new_title)
     if len(history) > 30:
         history = history[-30:]
-        
+
     with open(config.HISTORY_FILE, "w", encoding="utf-8") as f:
         for title in history:
             f.write(title + "\n")
     return False
 
+
 # 본문 중간 이미지/영상에 위치 마커를 삽입하고 수집하는 스크립트.
+# borussia.de는 <article> 태그가 없는 SPA라, "실제 기사 제목 요소 ~ '뒤로가기(Newsübersicht)' 요소" 사이
+# 문서 순서 범위를 본문으로 간주한다. 다른 기사로 링크되는 "관련 기사" 카드 이미지는 제외한다.
 MEDIA_MARKER_JS = """
 (articleTitle) => {
     function findTitleEl(text) {
@@ -99,16 +102,18 @@ MEDIA_MARKER_JS = """
                 }
             }
             if (!src) continue; // 쿠키 동의 전이거나 실제 영상이 없는 placeholder
-            
+
             const marker = `VID:${vidIdx}`;
             vidIdx++;
             el.parentNode.insertBefore(document.createTextNode(` [[${marker}]] `), el);
             results.push({ type: 'video', marker, src });
         }
     }
+
     return results;
 }
 """
+
 
 async def dismiss_cookie_consent(page):
     # consentmanager.net 배너: 동의 전에는 본문 내 영상/iframe의 src가 비어있음
@@ -119,6 +124,7 @@ async def dismiss_cookie_consent(page):
             await asyncio.sleep(1)
     except Exception:
         pass
+
 
 async def get_borussia_news(ignore_history=False):
     async with async_playwright() as p:
@@ -138,7 +144,6 @@ async def get_borussia_news(ignore_history=False):
 
         await dismiss_cookie_consent(page)
 
-        # 무한 스크롤 다운 (처음 5회)
         for _ in range(5):
             await page.mouse.wheel(0, 1500)
             await asyncio.sleep(1)
@@ -156,7 +161,6 @@ async def get_borussia_news(ignore_history=False):
 
         final_task_list = []
 
-        # 최대 상위 10개 기사 크롤링 진행
         for i, a in enumerate(articles[:10]):
             title = a.select_one('h3').get_text(strip=True) if a.select_one('h3') else "제목 없음"
             full_url = f"https://www.borussia.de{a['href']}"
@@ -170,46 +174,84 @@ async def get_borussia_news(ignore_history=False):
             else:
                 print(f"      ⚡ [테스트 모드] 히스토리 무시하고 수집 진행")
 
-            # 기사 상세 페이지 이동
-            detail_page = await context.new_page()
+            # 상세 수집 시작
             try:
-                print(f"      📖 상세 페이지 이동: {full_url}")
-                await detail_page.goto(full_url, wait_until="networkidle", timeout=30000)
-                await dismiss_cookie_consent(detail_page)
-                
-                # JavaScript 마커 삽입 및 미디어 목록 수집 실행
-                media_list = await detail_page.evaluate(MEDIA_MARKER_JS, title)
-                
-                # 마커가 텍스트 노드로 삽입된 이후의 최종 HTML 수집
-                detail_html = await detail_page.content()
-                detail_soup = BeautifulSoup(detail_html, 'html.parser')
-                
-                # 본문 텍스트 추출 가공 (예: 특정 div 영역 또는 p 태그 수집)
-                # borussia.de는 article 태그가 없으므로 본문 텍스트 내에 [[IMG:X]] 또는 [[VID:X]] 마커가 포함됩니다.
-                paragraphs = detail_soup.find_all(['p', 'div'])
-                content_texts = []
-                for p in paragraphs:
-                    # 마커 문자열([[IMG: 또는 [[VID:)을 포함하거나 본문 구성에 적합한 요소들만 필터링
-                    txt = p.get_text(separator=" ", strip=True)
-                    if any(marker['marker'] in txt for marker in media_list) or (len(txt) > 20 and not p.find('a', href=re.compile(r'^/news/'))):
-                        if txt not in content_texts:
-                            content_texts.append(txt)
-                
-                full_content = "\n\n".join(content_texts)
-                
+                print(f"      ✅ 상세 페이지 이동 중...")
+                await page.goto(full_url, wait_until="domcontentloaded", timeout=60000)
+
+                try:
+                    await page.wait_for_load_state("networkidle", timeout=8000)
+                except Exception:
+                    pass
+
+                await dismiss_cookie_consent(page)
+
+                for _ in range(6):
+                    await page.mouse.wheel(0, 1200)
+                    await asyncio.sleep(0.3)
+
+                clean_title = re.sub(r'[\\/*?:"<>|]', "", title).strip()
+
+                # 본문 중간 이미지/영상 위치에 마커 삽입 + 수집
+                media = []
+                try:
+                    media = await page.evaluate(MEDIA_MARKER_JS, title)
+                except Exception as e:
+                    print(f"      ⚠️ 미디어 마커 삽입 실패: {e}")
+
+                images = []
+                videos = []
+                for m in media:
+                    if m['type'] == 'image':
+                        src = m.get('src') or ''
+                        if src and not src.startswith('data:'):
+                            images.append({'marker': m['marker'], 'url': src})
+                        else:
+                            # URL 추출 실패: 해당 요소가 실제로 있던 위치를 스크린샷으로 대체
+                            fallback_path = f"{config.IMAGE_DIR}/{clean_title}_{m['marker'].replace(':', '_')}.png"
+                            try:
+                                el = await page.query_selector(f'[data-crawler-marker="{m["marker"]}"]')
+                                if el:
+                                    await el.screenshot(path=fallback_path)
+                                    images.append({'marker': m['marker'], 'fallback_screenshot': fallback_path})
+                            except Exception as e:
+                                print(f"      ⚠️ 대체 스크린샷 실패 ({m['marker']}): {e}")
+                    else:
+                        videos.append({'marker': m['marker'], 'url': m['src']})
+
+                # === [사용자 요청 수정 부분] ===
+                content = ""
+
+                # 전략: 전체 텍스트 중 뉴스 섹션 추정 영역
+                # 일단 전체 텍스트를 가져옵니다. (마커가 삽입된 상태라 이미지/영상 위치도 함께 포함됨)
+                content = await page.evaluate("() => document.body.innerText")
+
+                # 필요 없는 상/하단 문구 제거 (Footer 부분 잘라내기)
+                # "ZURÜCK ZUR NEWSÜBERSICHT" (뉴스 목록으로 돌아가기) 버튼이 나오면 그 뒤는 광고나 푸터이므로 버립니다.
+                if "ZURÜCK ZUR NEWSÜBERSICHT" in content:
+                    content = content.split("ZURÜCK ZUR NEWSÜBERSICHT")[0]
+
+                # 불필요한 공백 정리
+                content = content.strip()
+                # ==============================
+
+                # 리드 이미지 캡처 (기존 방식 유지: 상단 고정 영역. 실제로는 제목보다 DOM상 앞에 있어 마커 범위 밖)
+                image_path = f"{config.IMAGE_DIR}/{clean_title}.png"
+                await page.screenshot(path=image_path, clip={'x': 40, 'y': 100, 'width': 1200, 'height': 600})
+
                 final_task_list.append({
-                    "title": title,
-                    "url": full_url,
-                    "content": full_content,
-                    "media": media_list
+                    'title': title,
+                    'link': full_url,
+                    'content': content,
+                    'image_path': image_path,
+                    'images': images,
+                    'videos': videos,
                 })
-                print(f"      ✓ 성공적으로 수집 완료 (미디어 {len(media_list)}개 발견)")
-                
+                # 이제 503이 아니라 실제 본문 길이가 찍힐 겁니다.
+                print(f"      📄 수집 완료 (본문 길이: {len(content)}, 추가 이미지 {len(images)}개, 영상 {len(videos)}개)")
+
             except Exception as e:
-                print(f"      ❌ 상세 페이지 처리 중 에러 발생: {e}")
-            finally:
-                await detail_page.close()
-                await asyncio.sleep(1) # 부하 방지용 대기
+                print(f"      ❌ 상세 페이지 처리 에러: {e}")
 
         await browser.close()
         return final_task_list
