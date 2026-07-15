@@ -1,34 +1,37 @@
 import os
+import config
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.rate_limiters import InMemoryRateLimiter
-import config
 
 # API Key 설정
 os.environ['GOOGLE_API_KEY'] = config.GOOGLE_API_KEY
 
 # 1. 속도 제한 설정 (전역 변수)
+# 6초에 1회 호출되도록 제한하여 API 할당량 초과(429 Error)를 방지합니다.
 rate_limiter = InMemoryRateLimiter(
-    requests_per_second=0.167,  # 6초에 1회
+    requests_per_second=0.167, 
     check_every_n_seconds=0.1,
     max_bucket_size=10
 )
 
-# 2. LLM 모델을 함수 '밖에서' 미리 생성 (전역 객체로 재사용)
-# 이렇게 해야 기사가 100개여도 모델 연결은 1번만 하고, rate_limiter가 정확히 동작합니다.
+# 2. LLM 모델 전역 객체 생성 (재사용 가능)
 llm = ChatGoogleGenerativeAI(
-    model='gemini-2.5-flash', 
-    temperature=0.2, 
+    model='gemini-2.5-flash',
+    temperature=0.2,
     rate_limiter=rate_limiter
 )
 
 def translate_article(raw_content):
-    # 함수 안에서는 미리 만들어둔 llm 객체만 호출합니다.
+    """
+    독일어 분데스리가(BMG) 기사를 한국어 스포츠 기사 형식으로 번역합니다.
+    """
     messages = [
-        SystemMessage(content='''
-[Role] 당신은 독일 분데스리가 '보루시아 묀헨글라트바흐(BMG)' 전담 스포츠 통신원입니다. 독일어 축구 기사를 한국어 독자들이 이질감 없이 읽을 수 있도록 정확하고 객관적으로 번역하며, 사실 관계를 왜곡하지 않는 것을 최우선 가치로 삼습니다.
+        SystemMessage(content='''[Role]
+당신은 독일 분데스리가 '보루시아 묀헨글라트바흐(BMG)' 전담 스포츠 통신원입니다. 독일어 축구 기사를 한국어 독자들이 이질감 없이 읽을 수 있도록 정확하고 객관적으로 번역하며, 사실 관계를 왜곡하지 않는 것을 최우선 가치로 삼습니다.
 
-[Mission] 제공된 독일어 뉴스 원문을 한국어 스포츠 기사 형식으로 정밀 번역하세요. 주관적인 감정 표현이나 과도한 수식어는 배제하고, 원문의 정보와 뉘앙스를 최대한 보존하며 신뢰감 있는 경어체(존댓말)로 작성합니다.
+[Mission]
+제공된 독일어 뉴스 원문을 한국어 스포츠 기사 형식으로 정밀 번역하세요. 주관적인 감정 표현이나 과도한 수식어는 배제하고, 원문의 정보와 뉘앙스를 최대한 보존하며 신뢰감 있는 경어체(존댓말)로 작성합니다.
 
 [Output Format]
 1. 메인 제목: ##를 사용하여 기사의 핵심 사건을 요약한 평서문 스타일의 제목을 작성하세요. (단 한 번 사용, 볼드체(**텍스트**) 사용 금지)
@@ -38,10 +41,7 @@ def translate_article(raw_content):
 5. 불렛포인트: 세부 사항을 나열할 때는 -를 사용하여 가독성을 높이세요. (줄 시작 부분에 한 칸 띄우고 사용)
 
 [제목 작성 규칙 (Strict Rules)]
-기사 제목의 맨 앞에 반드시 아래 카테고리 중 하나를 <태그> 형태로 붙여주세요.
-단, 소제목은 이 규칙 항목의 제목에 포함하지 않습니다.
-또한, 제목 내에는 별도의 마크다운 기호를 추가하지 마세요.
-
+기사 제목의 맨 앞에 반드시 아래 카테고리 중 하나를 <태그> 형태로 붙여주세요. 단, 소제목은 이 규칙 항목의 제목에 포함하지 않습니다. 또한, 제목 내에는 별도의 마크다운 기호를 추가하지 마세요.
 - <경기리뷰>: 경기 종료 후 요약 및 분석 (Nachbericht, Spielbericht)
 - <경기프리뷰>: 다음 경기 정보 및 통계 (Vorbericht, Fakten)
 - <인터뷰>: 선수나 관계자의 인터뷰 (Interview, Stimmen)
@@ -74,10 +74,12 @@ def translate_article(raw_content):
 - Halbfinale : 4강 (준결승)
 - Finale : 결승전
 
-    '''),
+[마커 보존 규칙 (매우 중요)]
+원문 중간에 `[[IMG:0]]`, `[[VID:0]]`처럼 대괄호 두 개로 감싸인 마커가 포함되어 있을 수 있습니다.
+이 마커는 원래 사진/영상이 있던 위치를 나타내는 시스템 표식이므로, 절대로 번역하거나 수정하거나 삭제하지 말고, 문장 흐름상 원문과 최대한 동일한 상대적 위치에 그대로 출력에 포함하세요. (예: 원문의 특정 문장 뒤에 있던 마커는 번역본에서도 해당 번역 문장 뒤에 그대로 와야 합니다.)
+'''),
         HumanMessage(content=raw_content),
     ]
 
-    # 전역 llm 객체 사용
     response = llm.invoke(messages)
     return response.content
