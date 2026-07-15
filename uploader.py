@@ -45,7 +45,9 @@ def _replace_media_markers(formatted_body, images, videos):
             downloaded = _download_image(img['url'])
             if downloaded:
                 attachments.append(downloaded)
-            replacement = f'📷 <a href="{img["url"]}">사진 원본 보기</a>'
+            # 네이버 카페 글쓰기 API는 본문 안의 <a href="외부URL">(하이퍼링크 태그) 자체를 거부한다
+            # (HTTP 403, 에러코드 999). 그래서 태그 없이 순수 텍스트로만 원본 URL을 남긴다.
+            replacement = f'📷 사진 원본: {img["url"]}'
             formatted_body = formatted_body.replace(marker_tag, replacement)
         elif img.get('fallback_screenshot'):
             attachments.append(img['fallback_screenshot'])
@@ -53,7 +55,7 @@ def _replace_media_markers(formatted_body, images, videos):
 
     for vid in videos:
         marker_tag = f"[[{vid['marker']}]]"
-        replacement = f'🎥 관련 영상: <a href="{vid["url"]}">{vid["url"]}</a>'
+        replacement = f'🎥 관련 영상: {vid["url"]}'
         formatted_body = formatted_body.replace(marker_tag, replacement)
 
     return formatted_body, attachments
