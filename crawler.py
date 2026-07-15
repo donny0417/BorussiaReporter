@@ -31,7 +31,7 @@ def manage_history(new_title):
 # 본문 중간 이미지/영상에 위치 마커를 삽입하고 수집하는 스크립트.
 # borussia.de는 <article> 태그가 없는 SPA라, "실제 기사 제목 요소 ~ '뒤로가기(Newsübersicht)' 요소" 사이
 # 문서 순서 범위를 본문으로 간주한다. 다른 기사로 링크되는 "관련 기사" 카드 이미지는 제외한다.
-MEDIA_MARKER_JS = """
+MEDIA_MARKER_JS = r"""
 (articleTitle) => {
     function findTitleEl(text) {
         if (!text) return document.querySelector('h1');
@@ -76,9 +76,19 @@ MEDIA_MARKER_JS = """
     let imgIdx = 0;
     let vidIdx = 0;
 
+    function isAdLink(el) {
+        const anchor = el.closest('a');
+        if (!anchor) return false;
+        const href = anchor.getAttribute('href') || '';
+        if (href.includes('utm_')) return true; // 마케팅/캠페인 추적 파라미터
+        if (/ticket\.borussia\.de|shop\.borussia\.de/.test(href)) return true; // 티켓/샵 프로모션 서브도메인
+        return false;
+    }
+
     for (const el of allMedia) {
         if (!isBetween(el, titleEl, backEl)) continue;
         if (el.closest('a[href^="/news/"]')) continue; // 관련 기사 카드 제외
+        if (isAdLink(el)) continue; // 티켓/샵 프로모션 배너 제외
 
         if (el.tagName === 'IMG') {
             const rect = el.getBoundingClientRect();
