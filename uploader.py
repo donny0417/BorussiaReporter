@@ -77,6 +77,8 @@ def upload_single_article(post_data, access_token):
             files.append(('image', (os.path.basename(path), f, 'image/png')))
 
         response = requests.post(upload_url, headers=headers, data=data, files=files or None)
+        if response.status_code != 200:
+            print(f"      ⚠️ 업로드 실패 응답 ({response.status_code}): {response.text[:500]}")
         return response.status_code == 200
     finally:
         for f in opened_files:
