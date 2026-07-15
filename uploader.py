@@ -40,14 +40,16 @@ def _replace_media_markers(formatted_body, images, videos):
 
     for img in images:
         marker_tag = f"[[{img['marker']}]]"
-        formatted_body = formatted_body.replace(marker_tag, '')
 
         if img.get('url'):
             downloaded = _download_image(img['url'])
             if downloaded:
                 attachments.append(downloaded)
+            replacement = f'📷 <a href="{img["url"]}">사진 원본 보기</a>'
+            formatted_body = formatted_body.replace(marker_tag, replacement)
         elif img.get('fallback_screenshot'):
             attachments.append(img['fallback_screenshot'])
+            formatted_body = formatted_body.replace(marker_tag, '')
 
     for vid in videos:
         marker_tag = f"[[{vid['marker']}]]"
