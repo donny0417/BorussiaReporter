@@ -37,7 +37,7 @@ jobs:
         NAVER_REFRESH_TOKEN: ${{ secrets.NAVER_REFRESH_TOKEN }}
         NAVER_CLUB_ID: ${{ secrets.NAVER_CLUB_ID_TEST }}  # TEMP-TEST-ONLY, revert before merge
         NAVER_MENU_ID: ${{ secrets.NAVER_MENU_ID_TEST }}  # TEMP-TEST-ONLY, revert before merge
-      run: python test_manual.py  # TEMP-TEST-ONLY, revert before merge
+      run: python main.py
 
     - name: Commit and Push History
       run: |
