@@ -2,6 +2,7 @@ import requests
 import urllib.parse
 import re
 import os
+import mimetypes
 import config
 
 def get_naver_access_token():
@@ -15,19 +16,37 @@ def get_naver_access_token():
     res = requests.get(token_url, params=params).json()
     return res.get("access_token")
 
+def _download_image(url):
+    # 네이버 카페 글쓰기 API는 본문 HTML 안에 외부 도메인 <img src="..."> 태그를 넣으면
+    # 처리에 실패한다(HTTP 403, 에러코드 999). 그래서 URL 이미지도 다운로드해서
+    # 기존에 잘 동작하는 멀티파트 첨부 방식으로 올린다.
+    try:
+        resp = requests.get(url, timeout=15)
+        resp.raise_for_status()
+        content_type = resp.headers.get('Content-Type', 'image/jpeg').split(';')[0].strip()
+        ext = mimetypes.guess_extension(content_type) or '.jpg'
+        filename = f"dl_{abs(hash(url))}{ext}"
+        path = os.path.join(config.IMAGE_DIR, filename)
+        with open(path, 'wb') as f:
+            f.write(resp.content)
+        return path
+    except Exception:
+        return None
+
 def _replace_media_markers(formatted_body, images, videos):
-    # 인라인 배치 가능한 이미지(URL)는 <img> 태그로 직접 삽입.
-    # URL 추출에 실패해 스크린샷으로 대체된 이미지는 본문 내 정확한 위치 삽입이 보장되지 않으므로,
-    # 마커는 지우고 멀티파트 첨부 목록에 추가해서 함께 올린다.
+    # 이미지는 본문 내 정확한 위치 삽입이 보장되지 않으므로, 마커는 본문에서 지우고
+    # 멀티파트 첨부 목록에 순서대로 추가해서 함께 올린다.
     attachments = []
 
     for img in images:
         marker_tag = f"[[{img['marker']}]]"
+        formatted_body = formatted_body.replace(marker_tag, '')
+
         if img.get('url'):
-            replacement = f'<img src="{img["url"]}">'
-            formatted_body = formatted_body.replace(marker_tag, replacement)
+            downloaded = _download_image(img['url'])
+            if downloaded:
+                attachments.append(downloaded)
         elif img.get('fallback_screenshot'):
-            formatted_body = formatted_body.replace(marker_tag, '')
             attachments.append(img['fallback_screenshot'])
 
     for vid in videos:
@@ -74,7 +93,8 @@ def upload_single_article(post_data, access_token):
             except FileNotFoundError:
                 continue
             opened_files.append(f)
-            files.append(('image', (os.path.basename(path), f, 'image/png')))
+            mime_type = mimetypes.guess_type(path)[0] or 'image/png'
+            files.append(('image', (os.path.basename(path), f, mime_type)))
 
         response = requests.post(upload_url, headers=headers, data=data, files=files or None)
         if response.status_code != 200:
