@@ -53,4 +53,31 @@ def upload_single_article(post_data, access_token):
     subject = urllib.parse.quote(clean_title.replace('"', "'"))
 
     formatted_body = raw_body.replace('"', "'")
-    formatted_body = re.sub(r'(^|\n)-\s+(.*)', r'\1&nbsp;&nbsp;• \2', forma
+    formatted_body = re.sub(r'(^|\n)-\s+(.*)', r'\1&nbsp;&nbsp;• \2', formatted_body)
+    formatted_body = re.sub(r'###\s*(.*)', r'<br><b>[ \1 ]</b>', formatted_body)
+    formatted_body = formatted_body.replace('---', '<hr>')
+    formatted_body = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', formatted_body)
+    formatted_body, fallback_attachments = _replace_media_markers(formatted_body, images, videos)
+    formatted_body = formatted_body.replace('\n', '<br>')
+    content = urllib.parse.quote(formatted_body)
+
+    data = {'subject': subject, 'content': content}
+    headers = {'Authorization': f"Bearer {access_token}"}
+
+    attachment_paths = [image_path] + fallback_attachments
+    opened_files = []
+    try:
+        files = []
+        for path in attachment_paths:
+            try:
+                f = open(path, 'rb')
+            except FileNotFoundError:
+                continue
+            opened_files.append(f)
+            files.append(('image', (os.path.basename(path), f, 'image/png')))
+
+        response = requests.post(upload_url, headers=headers, data=data, files=files or None)
+        return response.status_code == 200
+    finally:
+        for f in opened_files:
+            f.close()
