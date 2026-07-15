@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# 크롤러 실행 중 생성되는 임시 이미지 (스크린샷)
+borussia_images/
+
 # C extensions
 *.so
 
