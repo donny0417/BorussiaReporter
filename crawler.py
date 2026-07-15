@@ -236,6 +236,9 @@ async def get_borussia_news(ignore_history=False):
                 # ==============================
 
                 # 리드 이미지 캡처 (기존 방식 유지: 상단 고정 영역. 실제로는 제목보다 DOM상 앞에 있어 마커 범위 밖)
+                # 위에서 지연 로딩 이미지 확보를 위해 페이지를 스크롤했으므로, 고정 좌표 캡처 전에 맨 위로 되돌린다.
+                await page.evaluate("() => window.scrollTo(0, 0)")
+                await asyncio.sleep(0.3)
                 image_path = f"{config.IMAGE_DIR}/{clean_title}.png"
                 await page.screenshot(path=image_path, clip={'x': 40, 'y': 100, 'width': 1200, 'height': 600})
 
