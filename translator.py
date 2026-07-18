@@ -17,7 +17,7 @@ rate_limiter = InMemoryRateLimiter(
 
 # 2. LLM 모델 전역 객체 생성 (재사용 가능)
 llm = ChatGoogleGenerativeAI(
-    model='gemini-2.5-flash',
+    model='gemini-3.5-flash',
     temperature=0.2,
     rate_limiter=rate_limiter
 )
