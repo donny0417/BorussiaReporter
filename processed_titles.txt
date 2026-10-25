@@ -1,6 +1,3 @@
-#BMGTSG: Stimmen zum Spiel
-Borussia verliert gegen Hoffenheim
-Uno vor Startelf-Debüt
 Borussias Frauen siegen in Frankfurt
 #BMGSCP: Blöcke 6A und 7A für Borussia-Fans freigeschaltet
 Mit St. Martin um den ista-Borussia-Park
@@ -28,3 +25,6 @@ Für einen leidenschaftlichen Auftritt belohnt
 Rouven Schröder zu Gast im Sport1-„Doppelpass“
 U17 verliert Spitzenspiel trotz langer Überzahl
 U23 unterliegt trotz Pausenführung
+#BMGKSC: Jetzt Tickets für Pokalduell sichern
+Scholten führt Frauen mit Elfmeter-Dreierpack zum Heimsieg
+U19 unterliegt im Verfolgerduell
