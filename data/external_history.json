@@ -1,42 +1,55 @@
 [
  {
-  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-ein-gladbach-star-verdient-sich-die-note-1-6b09b3653d0d9d6539f90814",
-  "title": "Ein Gladbach-Star verdient sich die Note 1 | Sport",
-  "outlet": "Bild",
-  "published": "",
-  "status": "skipped_paywall",
-  "recorded_at": "2026-11-28T11:09:07+00:00"
- },
- {
-  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-rouven-schroeder-faellt-mohya-entscheidung-6afaf82b5dc4e94a2532b951",
-  "title": "Borussia Mönchengladbach fällt Entscheidung bei Klopp- ...",
-  "outlet": "Bild",
-  "published": "",
-  "status": "skipped_paywall",
-  "recorded_at": "2026-11-28T11:09:07+00:00"
- },
- {
-  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-kleindienst-effekt-geht-nach-hinten-los-6b0a6c697df78695bac965e8",
-  "title": "Kleindienst-Effekt geht nach hinten los | Sport",
-  "outlet": "Bild",
-  "published": "",
-  "status": "skipped_irrelevant",
-  "recorded_at": "2026-11-28T11:09:07+00:00"
- },
- {
-  "url": "https://sport.sky.de/fussball/artikel/moritz-nicolas-koennte-gladbach-im-winter-verlassen/13616920/34843",
-  "title": "Moritz Nicolas könnte Gladbach im Winter verlassen",
-  "outlet": "Sky Sport",
-  "published": "Thu, 26 Nov 2026 11:00:00 GMT",
-  "status": "skipped_paywall",
-  "recorded_at": "2026-11-28T11:09:07+00:00"
- },
- {
   "url": "https://www.kicker.de/als-turm-kleindienst-vor-comeback-1275343/artikel",
   "title": "\"Als Turm\": Kleindienst vor Comeback - kicker",
   "outlet": "Kicker",
   "published": "Thu, 26 Nov 2026 14:08:46 GMT",
   "status": "posted",
   "recorded_at": "2026-11-28T11:09:36+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-gladbach-flop-konoplia-redet-klartext-6b0635c6cd4642ba2eb17a26",
+  "title": "Borussia Mönchengladbach: Gladbach-Flop Konoplia ...",
+  "outlet": "Bild",
+  "published": "Wed, 25 Nov 2026 11:00:00 GMT",
+  "status": "skipped_paywall",
+  "reason": "short content len=0",
+  "recorded_at": "2026-11-28T11:20:25+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/gladbach-honorat-doppelpack-reicht-nicht-zum-sieg-3-3-in-bremen_aid-159133127",
+  "title": "Honorat-Doppelpack reicht nicht zum Sieg - 3:3 in Bremen",
+  "outlet": "RP Online",
+  "published": "Fri, 27 Nov 2026 21:00:00 GMT",
+  "status": "skipped_paywall",
+  "reason": "short content len=0",
+  "recorded_at": "2026-11-28T11:20:25+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-ein-gladbach-star-verdient-sich-die-note-1-6b09b3653d0d9d6539f90814",
+  "title": "Ein Gladbach-Star verdient sich die Note 1 | Sport",
+  "outlet": "Bild",
+  "published": "Sat, 28 Nov 2026 08:00:00 GMT",
+  "status": "skipped_irrelevant",
+  "reason": "score=0.35<0.4",
+  "recorded_at": "2026-11-28T11:20:25+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/gladbach-zuschauerrekord-im-borussia-park-mit-einem-kleinen-aber_aid-158720545",
+  "title": "Aktuelle Nachrichten | Rheinische Post Online",
+  "outlet": "RP Online",
+  "published": "Mon, 23 Nov 2026 16:00:00 GMT",
+  "status": "skipped_irrelevant",
+  "reason": "score=0.01<0.4",
+  "recorded_at": "2026-11-28T11:20:25+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-doppel-comeback-macht-gladbach-hoffnung-6b05563e5842ff528b9e6c1b",
+  "title": "Borussia Mönchengladbach: Doppel-Comeback macht Gladbach Hoffnung | Sport | BILD.de",
+  "outlet": "Bild",
+  "published": "Tue, 24 Nov 2026 12:06:36 GMT",
+  "status": "posted",
+  "reason": "",
+  "recorded_at": "2026-11-28T11:20:46+00:00"
  }
 ]
