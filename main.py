@@ -10,7 +10,7 @@ def run_external(token, official=None):
     """외부 매체(Tavily) 기사 수집 → 번역 → 업로드. 실패해도 공식 뉴스 흐름에 영향 없음."""
     print("🚀 외부 기사 수집 시작 (Tavily)...")
     history = external_news.load_history()
-    articles = external_news.fetch(history, external_news.official_for_compare(official or []))
+    articles = external_news.fetch(history, external_news.official_for_compare(official or [], history))
 
     for i, art in enumerate(articles):
         try:
@@ -47,7 +47,11 @@ def run_external(token, official=None):
             external_news.record(history, art, 'failed')
             continue
         ok = uploader.upload_single_article(post, token, menu_id=config.menu_id_for(art['key']))
-        external_news.record(history, art, 'posted' if ok else 'failed')
+        extra = None
+        if ok:   # 이후 실행에서 같은 소식을 다른 매체가 쓸 때 비교용(번역 제목 + 우리 요약 도입부만, 원문 아님)
+            entry = external_news.make_official_entry(art['title'], translated)
+            extra = {"compare_title": entry["title"], "compare_lead": entry["lead"]}
+        external_news.record(history, art, 'posted' if ok else 'failed', extra=extra)
         print(f"{'✅' if ok else '❌'} 외부 기사 업로드 [{art['outlet']}] {art['title'][:40]}")
         if i < len(articles) - 1:
             time.sleep(10)

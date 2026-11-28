@@ -68,7 +68,7 @@ def save_history(history):
         json.dump(history[-HISTORY_LIMIT:], f, ensure_ascii=False, indent=1)
 
 
-def record(history, article, status, reason=""):
+def record(history, article, status, reason="", extra=None):
     """status: posted | skipped_paywall | skipped_irrelevant | skipped_stale | skipped_duplicate | failed. reason은 스킵 원인 요약(본문 아님)."""
     history.append({
         "url": article["url"],
@@ -78,6 +78,7 @@ def record(history, article, status, reason=""):
         "status": status,
         "reason": reason,
         "recorded_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        **(extra or {}),
     })
 
 
@@ -346,14 +347,21 @@ def make_official_entry(title, translated_text, link=""):
             "posted_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
 
 
-def official_for_compare(recent):
-    """최근 72시간 이내 공식 기사 + (기록이 부족하면) processed_titles.txt의 최근 제목."""
+def official_for_compare(recent, history=None):
+    """이미 올라간 기사 목록: 최근 72시간 이내 공식 기사 + 앞서 올린 외부 기사(history) + (기록이 부족하면) processed_titles.txt의 최근 제목."""
     now = datetime.now(timezone.utc)
     items = []
     for o in recent:
         try:
             if (now - datetime.fromisoformat(o["posted_at"])).total_seconds() <= OFFICIAL_KEEP_HOURS * 3600:
                 items.append(o)
+        except Exception:
+            continue
+    for h in history or []:   # 앞서 올린 외부 기사(번역 제목 + 우리 요약 도입부만 저장되어 있음)
+        try:
+            if (h.get("status") == "posted" and h.get("compare_title") and
+                    (now - datetime.fromisoformat(h["recorded_at"])).total_seconds() <= OFFICIAL_KEEP_HOURS * 3600):
+                items.append({"title": f"[{h.get('outlet', '')}] {h['compare_title']}", "lead": h.get("compare_lead", "")})
         except Exception:
             continue
     if len(items) < OFFICIAL_TITLES_FALLBACK:
@@ -383,6 +391,26 @@ def drop_official_duplicates(passed, official, history):
         else:
             keep.append((dt, art))
     return keep
+
+
+def drop_cross_duplicates(passed, history):
+    """통과한 (시각, 기사) 목록에서 매체끼리 같은 소식을 다룬 기사를 묶어 대표 1건만 남긴다(LLM 1회, 실패 시 그대로).
+    대표 선택: 인터뷰/기자회견(전문 번역 대상) 우선 → 본문이 긴 기사 → 최신."""
+    if len(passed) < 2:
+        return passed
+    import translator
+    cands = [{"title": a["title"], "lead": re.sub(r"\s+", " ", a["content"])[:300]} for _, a in passed]
+    drop = set()
+    for ids in translator.group_duplicates(cands):
+        best = max(ids, key=lambda i: (needs_full_translation(passed[i][1]), len(passed[i][1]["content"]), passed[i][0]))
+        for i in ids:
+            if i != best:
+                drop.add(i)
+                art = passed[i][1]
+                why = f"다른 매체 기사와 중복: [{passed[best][1]['outlet']}] {passed[best][1]['title'][:50]}"
+                print(f"   ⏭️ [{art['outlet']}] skipped_duplicate ({why}): {art['title'][:40]}")
+                record(history, art, "skipped_duplicate", why)
+    return [p for i, p in enumerate(passed) if i not in drop]
 
 
 def select_balanced(passed, max_total=None, max_per_outlet=None):
@@ -489,6 +517,7 @@ def fetch(history=None, official=None):
         passed.append((published[0], art))
 
     passed = drop_official_duplicates(passed, official, history)
+    passed = drop_cross_duplicates(passed, history)
     articles = select_balanced(passed)
     print(f"📰 외부 기사 후보 {len(candidates)}건 → 필터 통과 {len(passed)}건 → 번역 대상 {len(articles)}건"
           + (f" (상한으로 제외 {len(passed) - len(articles)}건)" if len(passed) > len(articles) else ""))

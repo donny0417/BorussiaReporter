@@ -138,12 +138,12 @@ SYSTEM_PROMPT = '''[Role]
 '''
 
 
-DEDUP_PROMPT = '''당신은 축구 뉴스 편집자입니다. [공식 기사] 목록은 보루시아 묀헨글라트바흐 구단 공식 사이트 기사로 이미 카페에 올라간 글입니다. [후보 기사] 각각이 공식 기사와 "사실상 같은 내용"인지 판단하세요.
+DEDUP_PROMPT = '''당신은 축구 뉴스 편집자입니다. [이미 올라간 기사] 목록은 이미 카페에 올라간 글입니다(구단 공식 사이트 기사, 그리고 앞서 올린 외부 매체 기사). [후보 기사] 각각이 이미 올라간 기사와 "사실상 같은 내용"인지 판단하세요.
 
 중복(duplicate)으로 보는 경우: 같은 경기의 결과 보도, 같은 기자회견/인터뷰/발표/공지, 같은 계약·부상·명단 소식처럼 공식 기사가 이미 핵심 정보를 모두 전달한 경우.
-중복이 아닌 경우: 선수 평점, 분석·칼럼, 다른 인물의 발언/관점, 이적설·추측, 공식 기사에 없는 새로운 사실이나 배경이 담긴 기사. 확신이 없으면 중복이 아닌 것으로 판단하세요.
+중복이 아닌 경우: 선수 평점, 분석·칼럼, 다른 인물의 발언/관점, 이적설·추측, 이미 올라간 기사에 없는 새로운 사실이나 배경이 담긴 기사. 확신이 없으면 중복이 아닌 것으로 판단하세요.
 
-JSON만 출력하세요(설명·코드블록 금지): {"duplicates": [{"id": 후보번호, "official": 공식기사번호}]}. 중복이 없으면 {"duplicates": []}.'''
+JSON만 출력하세요(설명·코드블록 금지): {"duplicates": [{"id": 후보번호, "official": 이미올라간기사번호}]}. 중복이 없으면 {"duplicates": []}.'''
 
 
 def find_duplicates(candidates, official):
@@ -157,7 +157,7 @@ def find_duplicates(candidates, official):
     cand = "\n".join(f"[{i}] {c['title']} — {c.get('lead', '')}" for i, c in enumerate(candidates))
     try:
         resp = llm.invoke([SystemMessage(content=DEDUP_PROMPT),
-                           HumanMessage(content=f"[공식 기사]\n{off}\n\n[후보 기사]\n{cand}")])
+                           HumanMessage(content=f"[이미 올라간 기사]\n{off}\n\n[후보 기사]\n{cand}")])
         text = resp.content if isinstance(resp.content, str) else str(resp.content)
         data = _json.loads(_re.search(r"\{.*\}", text, _re.S).group(0))
         return {int(d["id"]): int(d["official"]) for d in data.get("duplicates", [])
@@ -165,4 +165,35 @@ def find_duplicates(candidates, official):
     except Exception as e:
         print(f"⚠️ 공식 기사 중복 판별 실패(거르지 않고 진행): {e}")
         return {}
+
+
+GROUP_PROMPT = '''당신은 축구 뉴스 편집자입니다. 아래 [후보 기사]들 중 "사실상 같은 소식"을 다룬 기사끼리 묶으세요.
+
+같은 소식으로 보는 경우: 같은 경기의 결과·리뷰, 같은 기자회견/인터뷰/발표, 같은 계약·부상·이적 소식처럼 핵심 사실이 같은 기사.
+별개로 보는 경우: 같은 경기라도 선수 평점·전술 분석·칼럼·팬 반응처럼 다루는 내용이 뚜렷이 다른 기사, 서로 다른 인물의 발언, 새로운 사실을 더한 기사. 확신이 없으면 묶지 마세요.
+
+JSON만 출력하세요(설명·코드블록 금지): {"groups": [[후보번호, 후보번호, ...], ...]}. 2건 이상인 묶음만 포함하고, 한 기사는 한 묶음에만 넣으세요. 묶을 것이 없으면 {"groups": []}.'''
+
+
+def group_duplicates(candidates):
+    """candidates: [{'title','lead'}]. 같은 소식끼리 묶은 인덱스 리스트의 리스트. 실패 시 [](=아무것도 묶지 않음)."""
+    import json as _json
+    import re as _re
+    if len(candidates) < 2:
+        return []
+    cand = "\n".join(f"[{i}] {c['title']} — {c.get('lead', '')}" for i, c in enumerate(candidates))
+    try:
+        resp = llm.invoke([SystemMessage(content=GROUP_PROMPT), HumanMessage(content=f"[후보 기사]\n{cand}")])
+        text = resp.content if isinstance(resp.content, str) else str(resp.content)
+        data = _json.loads(_re.search(r"\{.*\}", text, _re.S).group(0))
+        used, groups = set(), []
+        for g in data.get("groups", []):
+            ids = [int(i) for i in g if 0 <= int(i) < len(candidates) and int(i) not in used]
+            if len(ids) >= 2:
+                used.update(ids)
+                groups.append(ids)
+        return groups
+    except Exception as e:
+        print(f"⚠️ 매체 간 중복 판별 실패(거르지 않고 진행): {e}")
+        return []
 
