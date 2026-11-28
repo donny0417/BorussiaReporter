@@ -69,7 +69,7 @@ def save_history(history):
 
 
 def record(history, article, status, reason=""):
-    """status: posted | skipped_paywall | skipped_irrelevant | skipped_stale | failed. reason은 스킵 원인 요약(본문 아님)."""
+    """status: posted | skipped_paywall | skipped_irrelevant | skipped_stale | skipped_duplicate | failed. reason은 스킵 원인 요약(본문 아님)."""
     history.append({
         "url": article["url"],
         "title": article.get("title", ""),
@@ -318,6 +318,73 @@ def _fill_missing_content(client, candidates):
     print(f"🧩 본문이 비어 있던 {len(missing)}건 중 {filled}건을 extract로 보충")
 
 
+# ---------- 공식 기사와의 중복 제거 ----------
+OFFICIAL_KEEP_HOURS = 72   # 이 시간 안에 올린 공식 기사와만 비교
+OFFICIAL_TITLES_FALLBACK = 8  # data 기록이 없을 때 processed_titles.txt의 최근 제목(제목만) 사용
+
+
+def load_official_recent():
+    try:
+        with open(config.OFFICIAL_RECENT_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+
+def save_official_recent(items):
+    os.makedirs(config.DATA_DIR, exist_ok=True)
+    with open(config.OFFICIAL_RECENT_FILE, "w", encoding="utf-8") as f:
+        json.dump(items[-30:], f, ensure_ascii=False, indent=1)
+
+
+def make_official_entry(title, translated_text, link=""):
+    """업로드한 공식 기사에서 비교용 요약(번역 제목 + 도입부 약 300자)만 뽑는다. 본문 전체는 저장하지 않는다."""
+    head, _, rest = translated_text.strip().partition("\n")
+    ko_title = re.sub(r"^#+\s*", "", head).strip()
+    lead = re.sub(r"\[\[(IMG|VID):\d+\]\]|[#*>\-]+|\s+", " ", rest.split("---")[0]).strip()
+    return {"title": f"{title} / {ko_title}", "lead": lead[:300], "link": link,
+            "posted_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+
+
+def official_for_compare(recent):
+    """최근 72시간 이내 공식 기사 + (기록이 부족하면) processed_titles.txt의 최근 제목."""
+    now = datetime.now(timezone.utc)
+    items = []
+    for o in recent:
+        try:
+            if (now - datetime.fromisoformat(o["posted_at"])).total_seconds() <= OFFICIAL_KEEP_HOURS * 3600:
+                items.append(o)
+        except Exception:
+            continue
+    if len(items) < OFFICIAL_TITLES_FALLBACK:
+        try:
+            with open(config.HISTORY_FILE, "r", encoding="utf-8") as f:
+                titles = [t.strip() for t in f if t.strip()][-OFFICIAL_TITLES_FALLBACK:]
+            known = " ".join(o["title"] for o in items)
+            items += [{"title": t, "lead": ""} for t in titles if t not in known]
+        except FileNotFoundError:
+            pass
+    return items
+
+
+def drop_official_duplicates(passed, official, history):
+    """필터를 통과한 (시각, 기사) 목록에서 공식 기사와 같은 내용인 것을 뺀다(LLM 1회 호출, 실패 시 그대로)."""
+    if not passed or not official:
+        return passed
+    import translator  # 지연 import: 직접 실행/테스트 시 Gemini 설정 없이도 모듈이 로드되도록
+    cands = [{"title": a["title"], "lead": re.sub(r"\s+", " ", a["content"])[:300]} for _, a in passed]
+    dups = translator.find_duplicates(cands, official)
+    keep = []
+    for i, (dt, art) in enumerate(passed):
+        if i in dups:
+            why = f"공식 기사와 중복: {official[dups[i]]['title'][:60]}"
+            print(f"   ⏭️ [{art['outlet']}] skipped_duplicate ({why}): {art['title'][:40]}")
+            record(history, art, "skipped_duplicate", why)
+        else:
+            keep.append((dt, art))
+    return keep
+
+
 def select_balanced(passed, max_total=None, max_per_outlet=None):
     """통과 기사를 매체별 최신순 큐로 나눠 라운드로빈으로 뽑는다(총 상한, 매체당 상한 적용).
     하루 1회 실행 + 24시간 필터라 상한 밖 기사는 사라지므로, 특정 매체가 상한을 독점하지 않게 한다."""
@@ -340,8 +407,9 @@ def select_balanced(passed, max_total=None, max_per_outlet=None):
     return picked
 
 
-def fetch(history=None):
-    """새로 번역할 외부 기사 리스트를 반환한다. history는 스킵 기록이 추가되어 갱신된다."""
+def fetch(history=None, official=None):
+    """새로 번역할 외부 기사 리스트를 반환한다. history는 스킵 기록이 추가되어 갱신된다.
+    official: 최근 공식 기사 목록(제목/도입부). 같은 내용의 외부 기사는 제외한다."""
     from tavily import TavilyClient
 
     if not config.TAVILY_API_KEY:
@@ -420,6 +488,7 @@ def fetch(history=None):
         art["published_date"] = published[0].isoformat(timespec="minutes")
         passed.append((published[0], art))
 
+    passed = drop_official_duplicates(passed, official, history)
     articles = select_balanced(passed)
     print(f"📰 외부 기사 후보 {len(candidates)}건 → 필터 통과 {len(passed)}건 → 번역 대상 {len(articles)}건"
           + (f" (상한으로 제외 {len(passed) - len(articles)}건)" if len(passed) > len(articles) else ""))

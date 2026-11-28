@@ -6,11 +6,11 @@ import uploader
 import config
 import external_news
 
-def run_external(token):
+def run_external(token, official=None):
     """외부 매체(Tavily) 기사 수집 → 번역 → 업로드. 실패해도 공식 뉴스 흐름에 영향 없음."""
     print("🚀 외부 기사 수집 시작 (Tavily)...")
     history = external_news.load_history()
-    articles = external_news.fetch(history)
+    articles = external_news.fetch(history, external_news.official_for_compare(official or []))
 
     for i, art in enumerate(articles):
         try:
@@ -82,6 +82,7 @@ async def main():
                 'image_path': news['image_path'],
                 'images': news.get('images', []),
                 'videos': news.get('videos', []),
+                'official_entry': external_news.make_official_entry(news['title'], translated_text, news['link']),
             })
             print(f"✅ 번역 완료: {news['title']}")
         except Exception as e:
@@ -90,15 +91,18 @@ async def main():
     # 3. 네이버 카페 업로드
     print("🚀 카페 업로드 시작...")
     token = None if config.DRY_RUN else uploader.get_naver_access_token()
+    official_recent = external_news.load_official_recent()   # 외부 기사 중복 비교용(이번 실행 업로드분 포함)
 
     if config.DRY_RUN:
         for post in ready_to_post:
             print(f"🧪 [DRY_RUN] 공식 기사:\n{post['translated_text'][:500]}\n")
+            official_recent.append(post['official_entry'])   # 저장은 하지 않고 이번 실행의 비교에만 사용
     elif token:
         for i, post in enumerate(ready_to_post):
             success = uploader.upload_single_article(post, token)
             if success:
                 print(f"✅ 업로드 완료 [{i+1}/{len(ready_to_post)}]")
+                official_recent.append(post['official_entry'])
             else:
                 print(f"❌ 업로드 실패 [{i+1}/{len(ready_to_post)}]")
             
@@ -106,12 +110,15 @@ async def main():
                 print("⏳ 10초 대기...")
                 time.sleep(10)
 
+    if not config.DRY_RUN:
+        external_news.save_official_recent(official_recent)
+
     # 4. 외부 매체 기사 (격리: 실패해도 위 공식 뉴스 결과에 영향 없음)
     if config.EXTERNAL_ENABLED:
         if not config.DRY_RUN and not token:
             token = uploader.get_naver_access_token()
         try:
-            run_external(token)
+            run_external(token, official_recent)
         except Exception as e:
             print(f"❌ 외부 기사 처리 중 오류: {e}")
 

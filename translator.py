@@ -136,3 +136,33 @@ SYSTEM_PROMPT = '''[Role]
 원문 중간에 `[[IMG:0]]`, `[[VID:0]]`처럼 대괄호 두 개로 감싸인 마커가 포함되어 있을 수 있습니다.
 이 마커는 원래 사진/영상이 있던 위치를 나타내는 시스템 표식이므로, 절대로 번역하거나 수정하거나 삭제하지 말고, 문장 흐름상 원문과 최대한 동일한 상대적 위치에 그대로 출력에 포함하세요. (예: 원문의 특정 문장 뒤에 있던 마커는 번역본에서도 해당 번역 문장 뒤에 그대로 와야 합니다.)
 '''
+
+
+DEDUP_PROMPT = '''당신은 축구 뉴스 편집자입니다. [공식 기사] 목록은 보루시아 묀헨글라트바흐 구단 공식 사이트 기사로 이미 카페에 올라간 글입니다. [후보 기사] 각각이 공식 기사와 "사실상 같은 내용"인지 판단하세요.
+
+중복(duplicate)으로 보는 경우: 같은 경기의 결과 보도, 같은 기자회견/인터뷰/발표/공지, 같은 계약·부상·명단 소식처럼 공식 기사가 이미 핵심 정보를 모두 전달한 경우.
+중복이 아닌 경우: 선수 평점, 분석·칼럼, 다른 인물의 발언/관점, 이적설·추측, 공식 기사에 없는 새로운 사실이나 배경이 담긴 기사. 확신이 없으면 중복이 아닌 것으로 판단하세요.
+
+JSON만 출력하세요(설명·코드블록 금지): {"duplicates": [{"id": 후보번호, "official": 공식기사번호}]}. 중복이 없으면 {"duplicates": []}.'''
+
+
+def find_duplicates(candidates, official):
+    """candidates: [{'title','lead'}], official: [{'title','lead'}]. 공식 기사와 중복인 후보의 {인덱스: 공식기사 인덱스}.
+    판별 실패 시 빈 dict(=아무것도 거르지 않음)."""
+    import json as _json
+    import re as _re
+    if not candidates or not official:
+        return {}
+    off = "\n".join(f"[{i}] {o['title']} — {o.get('lead', '')}" for i, o in enumerate(official))
+    cand = "\n".join(f"[{i}] {c['title']} — {c.get('lead', '')}" for i, c in enumerate(candidates))
+    try:
+        resp = llm.invoke([SystemMessage(content=DEDUP_PROMPT),
+                           HumanMessage(content=f"[공식 기사]\n{off}\n\n[후보 기사]\n{cand}")])
+        text = resp.content if isinstance(resp.content, str) else str(resp.content)
+        data = _json.loads(_re.search(r"\{.*\}", text, _re.S).group(0))
+        return {int(d["id"]): int(d["official"]) for d in data.get("duplicates", [])
+                if 0 <= int(d["id"]) < len(candidates) and 0 <= int(d["official"]) < len(official)}
+    except Exception as e:
+        print(f"⚠️ 공식 기사 중복 판별 실패(거르지 않고 진행): {e}")
+        return {}
+

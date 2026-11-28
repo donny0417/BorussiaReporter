@@ -73,7 +73,7 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add processed_titles.txt data/external_history.json
+        git add processed_titles.txt data
         # 변경사항이 있을 때만 커밋 (중복 방지용 히스토리 업데이트)
         git commit -m "Update news history [skip ci]" || echo "No changes to commit"
         git push

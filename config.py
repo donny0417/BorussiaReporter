@@ -46,6 +46,7 @@ IMAGE_DIR = os.path.join(BASE_DIR, "borussia_images")
 HISTORY_FILE = os.path.join(BASE_DIR, "processed_titles.txt")
 DATA_DIR = os.path.join(BASE_DIR, "data")
 EXTERNAL_HISTORY_FILE = os.path.join(DATA_DIR, "external_history.json")
+OFFICIAL_RECENT_FILE = os.path.join(DATA_DIR, "official_recent.json")  # 최근 공식 기사 제목/도입부(중복 비교용)
 
 if not os.path.exists(IMAGE_DIR):
     os.makedirs(IMAGE_DIR)
