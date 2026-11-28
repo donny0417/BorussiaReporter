@@ -22,12 +22,40 @@ llm = ChatGoogleGenerativeAI(
     rate_limiter=rate_limiter
 )
 
-def translate_article(raw_content):
+EXTERNAL_RULES = '''
+
+[외부 매체 기사 추가 규칙]
+이 기사는 구단 공식 사이트가 아닌 외부 매체({outlet}, 원문 언어: {lang_name})의 보도입니다.
+1. 제목 맨 앞의 카테고리 태그는 위 목록에서 고르되, 이적설·추측성 보도는 <기타>를 사용하고 제목에 매체명을 포함하세요. (예: <기타> [Kicker] ...)
+2. 사실 확정이 아닌 내용은 "{outlet}은 ~라고 보도했습니다", "~할 가능성이 있다고 전했습니다"처럼 반드시 매체에 귀속시켜 서술하세요.
+3. 본문과 무관한 관련기사 목록, 광고, 구독 안내, 댓글, 작성자 소개 등은 모두 삭제하세요.
+4. 기사 본문에 보루시아 묀헨글라트바흐와 무관한 다른 경기·팀 기사 부분이 섞여 있으면 번역하지 마세요.
+5. 시간 표기 규칙은 독일 현지 시간 기사에만 적용하세요. 영국 매체(Sky Sports)의 시간은 영국 시간(GMT/BST) 기준일 수 있으므로 원문에 명시된 시간대를 확인해 한국 시간(KST)을 병기하고, 불명확하면 변환하지 마세요.
+'''
+
+LANG_NAMES = {'de': '독일어', 'en': '영어'}
+
+
+def translate_article(raw_content, lang='de', outlet=None):
     """
-    독일어 분데스리가(BMG) 기사를 한국어 스포츠 기사 형식으로 번역합니다.
+    분데스리가(BMG) 기사를 한국어 스포츠 기사 형식으로 번역합니다.
+    outlet이 주어지면 외부 매체 기사용 추가 규칙이 적용됩니다.
     """
+    lang_name = LANG_NAMES.get(lang, lang)
+    system_prompt = SYSTEM_PROMPT
+    if lang != 'de':
+        system_prompt = system_prompt.replace('독일어', lang_name)
+    if outlet:
+        system_prompt += EXTERNAL_RULES.format(outlet=outlet, lang_name=lang_name)
     messages = [
-        SystemMessage(content='''[Role]
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=raw_content),
+    ]
+    response = llm.invoke(messages)
+    return response.content
+
+
+SYSTEM_PROMPT = '''[Role]
 당신은 독일 분데스리가 '보루시아 묀헨글라트바흐(BMG)' 전담 스포츠 통신원입니다. 독일어 축구 기사를 한국어 독자들이 이질감 없이 읽을 수 있도록 정확하고 객관적으로 번역하며, 사실 관계를 왜곡하지 않는 것을 최우선 가치로 삼습니다.
 
 [Mission]
@@ -80,9 +108,4 @@ def translate_article(raw_content):
 [마커 보존 규칙 (매우 중요)]
 원문 중간에 `[[IMG:0]]`, `[[VID:0]]`처럼 대괄호 두 개로 감싸인 마커가 포함되어 있을 수 있습니다.
 이 마커는 원래 사진/영상이 있던 위치를 나타내는 시스템 표식이므로, 절대로 번역하거나 수정하거나 삭제하지 말고, 문장 흐름상 원문과 최대한 동일한 상대적 위치에 그대로 출력에 포함하세요. (예: 원문의 특정 문장 뒤에 있던 마커는 번역본에서도 해당 번역 문장 뒤에 그대로 와야 합니다.)
-'''),
-        HumanMessage(content=raw_content),
-    ]
-
-    response = llm.invoke(messages)
-    return response.content
+'''

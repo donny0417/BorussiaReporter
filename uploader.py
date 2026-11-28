@@ -60,11 +60,13 @@ def _replace_media_markers(formatted_body, images, videos):
 
     return formatted_body, attachments
 
-def upload_single_article(post_data, access_token):
-    upload_url = f"https://openapi.naver.com/v1/cafe/{config.NAVER_CLUB_ID}/menu/{config.NAVER_MENU_ID}/articles"
+def upload_single_article(post_data, access_token, club_id=None, menu_id=None):
+    club_id = club_id or config.TARGET_CLUB_ID
+    menu_id = menu_id or config.TARGET_MENU_ID
+    upload_url = f"https://openapi.naver.com/v1/cafe/{club_id}/menu/{menu_id}/articles"
 
     article_text = post_data['translated_text']
-    image_path = post_data['image_path']
+    image_path = post_data.get('image_path')
     images = post_data.get('images', [])
     videos = post_data.get('videos', [])
 
@@ -87,7 +89,7 @@ def upload_single_article(post_data, access_token):
     data = {'subject': subject, 'content': content}
     headers = {'Authorization': f"Bearer {access_token}"}
 
-    attachment_paths = [image_path] + fallback_attachments
+    attachment_paths = ([image_path] if image_path else []) + fallback_attachments
     opened_files = []
     try:
         files = []

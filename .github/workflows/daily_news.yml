@@ -4,6 +4,16 @@ on:
   schedule:
     - cron: '17 20 * * *'
   workflow_dispatch: # 이 설정이 있어야 "Run workflow" 버튼이 생깁니다!
+    inputs:
+      target:
+        description: '게시 대상 (test = 모의 카페, prod = 본 카페)'
+        default: 'test'
+        type: choice
+        options: [test, prod]
+      dry_run:
+        description: 'DRY_RUN (번역만 하고 업로드 안 함)'
+        default: false
+        type: boolean
 
 jobs:
   build:
@@ -36,13 +46,19 @@ jobs:
         NAVER_REFRESH_TOKEN: ${{ secrets.NAVER_REFRESH_TOKEN }}
         NAVER_CLUB_ID: ${{ secrets.NAVER_CLUB_ID }}
         NAVER_MENU_ID: ${{ secrets.NAVER_MENU_ID }}
+        TEST_NAVER_CLUB_ID: ${{ secrets.TEST_NAVER_CLUB_ID }}
+        TEST_NAVER_MENU_ID: ${{ secrets.TEST_NAVER_MENU_ID }}
+        TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        # 스케줄 실행은 inputs가 비어 TARGET 기본값(test)이 적용됨. 본 카페 전환은 아래 'test'를 'prod'로 변경
+        TARGET: ${{ github.event.inputs.target || 'test' }}
+        DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
       run: python main.py
 
     - name: Commit and Push History
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add processed_titles.txt
+        git add processed_titles.txt data/external_history.json
         # 변경사항이 있을 때만 커밋 (중복 방지용 히스토리 업데이트)
         git commit -m "Update news history [skip ci]" || echo "No changes to commit"
         git push

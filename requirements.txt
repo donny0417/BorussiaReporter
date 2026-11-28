@@ -5,3 +5,4 @@ python-dotenv==1.0.1
 langchain-google-genai==2.0.9
 langchain-core==0.3.33
 nest_asyncio==1.6.0
+tavily-python==0.5.0
