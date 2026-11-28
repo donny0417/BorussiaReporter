@@ -8,42 +8,6 @@
   "recorded_at": "2026-11-28T11:09:36+00:00"
  },
  {
-  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-gladbach-flop-konoplia-redet-klartext-6b0635c6cd4642ba2eb17a26",
-  "title": "Borussia Mönchengladbach: Gladbach-Flop Konoplia ...",
-  "outlet": "Bild",
-  "published": "Wed, 25 Nov 2026 11:00:00 GMT",
-  "status": "skipped_paywall",
-  "reason": "short content len=0",
-  "recorded_at": "2026-11-28T11:20:25+00:00"
- },
- {
-  "url": "https://rp-online.de/sport/fussball/borussia/gladbach-honorat-doppelpack-reicht-nicht-zum-sieg-3-3-in-bremen_aid-159133127",
-  "title": "Honorat-Doppelpack reicht nicht zum Sieg - 3:3 in Bremen",
-  "outlet": "RP Online",
-  "published": "Fri, 27 Nov 2026 21:00:00 GMT",
-  "status": "skipped_paywall",
-  "reason": "short content len=0",
-  "recorded_at": "2026-11-28T11:20:25+00:00"
- },
- {
-  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-ein-gladbach-star-verdient-sich-die-note-1-6b09b3653d0d9d6539f90814",
-  "title": "Ein Gladbach-Star verdient sich die Note 1 | Sport",
-  "outlet": "Bild",
-  "published": "Sat, 28 Nov 2026 08:00:00 GMT",
-  "status": "skipped_irrelevant",
-  "reason": "score=0.35<0.4",
-  "recorded_at": "2026-11-28T11:20:25+00:00"
- },
- {
-  "url": "https://rp-online.de/sport/fussball/borussia/gladbach-zuschauerrekord-im-borussia-park-mit-einem-kleinen-aber_aid-158720545",
-  "title": "Aktuelle Nachrichten | Rheinische Post Online",
-  "outlet": "RP Online",
-  "published": "Mon, 23 Nov 2026 16:00:00 GMT",
-  "status": "skipped_irrelevant",
-  "reason": "score=0.01<0.4",
-  "recorded_at": "2026-11-28T11:20:25+00:00"
- },
- {
   "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-doppel-comeback-macht-gladbach-hoffnung-6b05563e5842ff528b9e6c1b",
   "title": "Borussia Mönchengladbach: Doppel-Comeback macht Gladbach Hoffnung | Sport | BILD.de",
   "outlet": "Bild",
@@ -51,5 +15,68 @@
   "status": "posted",
   "reason": "",
   "recorded_at": "2026-11-28T11:20:46+00:00"
+ },
+ {
+  "url": "https://www.kicker.de/assist-gegen-luettich-gladbach-freut-sich-auf-rueckkehrer-kuehn-1271055/artikel",
+  "title": "Assist gegen Lüttich: Gladbach freut sich auf Rückkehrer ...",
+  "outlet": "Kicker",
+  "published": "",
+  "status": "skipped_paywall",
+  "reason": "short content len=0",
+  "recorded_at": "2026-11-28T11:31:25+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/stegemann-entlassung-in-gladbach-so-geht-es-jetzt-weiter-fragen-und-antworten_aid-159052411",
+  "title": "Stegemann-Entlassung in Gladbach: So geht es jetzt weiter",
+  "outlet": "RP Online",
+  "published": "Fri, 27 Nov 2026 11:00:00 GMT",
+  "status": "skipped_paywall",
+  "reason": "short content len=1243",
+  "recorded_at": "2026-11-28T11:31:25+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/gladbach-die-wahrheit-des-bvb-spiels-ist-gefaehrlich-im-abstiegskampf_aid-158781587",
+  "title": "Die Wahrheit des BVB-Spiels ist gefährlich im Abstiegskampf",
+  "outlet": "RP Online",
+  "published": "Sun, 22 Nov 2026 11:00:00 GMT",
+  "status": "skipped_paywall",
+  "reason": "short content len=1454",
+  "recorded_at": "2026-11-28T11:31:25+00:00"
+ },
+ {
+  "url": "https://sport.sky.de/fussball/artikel/borussia-moenchengladbach-trennt-sich-von-stefan-stegemann-fuehrungswechsel-mitten-im-abstiegskampf/13616801/34943",
+  "title": "Borussia Mönchengladbach trennt sich von Stefan ...",
+  "outlet": "Sky Sport",
+  "published": "Thu, 26 Nov 2026 11:00:00 GMT",
+  "status": "skipped_stale",
+  "reason": "2026-11-26 12:00 (>24h)",
+  "recorded_at": "2026-11-28T11:31:25+00:00"
+ },
+ {
+  "url": "https://sport.sky.de/fussball/artikel/heute-luft-nach-oben-gelassen-stimmen-zu-werder-gegen-gladbach/13617392/34828",
+  "title": "''Heute Luft nach oben gelassen'' - Stimmen zu Werder ...",
+  "outlet": "Sky Sport",
+  "published": "Fri, 27 Nov 2026 23:00:00 GMT",
+  "status": "skipped_irrelevant",
+  "reason": "score=0.34<0.4",
+  "recorded_at": "2026-11-28T11:31:25+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/gladbach-honorat-doppelpack-reicht-nicht-zum-sieg-3-3-in-bremen_aid-159133127",
+  "title": "Gladbach: Honorat-Doppelpack reicht nicht zum Sieg - 3:3 in Bremen",
+  "outlet": "RP Online",
+  "published": "2026-11-27T22:00+00:00",
+  "status": "posted",
+  "reason": "",
+  "recorded_at": "2026-11-28T11:31:48+00:00"
+ },
+ {
+  "url": "https://sport.sky.de/fussball/bremen-vs-mgladbach/spielbericht/563405",
+  "title": "Spielbericht | Bremen - M'gladbach | 27.11.2026",
+  "outlet": "Sky Sport",
+  "published": "2026-11-27T21:00+00:00",
+  "status": "posted",
+  "reason": "",
+  "recorded_at": "2026-11-28T11:32:10+00:00"
  }
 ]
