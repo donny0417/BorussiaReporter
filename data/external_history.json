@@ -17,51 +17,6 @@
   "recorded_at": "2026-11-28T11:20:46+00:00"
  },
  {
-  "url": "https://www.kicker.de/assist-gegen-luettich-gladbach-freut-sich-auf-rueckkehrer-kuehn-1271055/artikel",
-  "title": "Assist gegen Lüttich: Gladbach freut sich auf Rückkehrer ...",
-  "outlet": "Kicker",
-  "published": "",
-  "status": "skipped_paywall",
-  "reason": "short content len=0",
-  "recorded_at": "2026-11-28T11:31:25+00:00"
- },
- {
-  "url": "https://rp-online.de/sport/fussball/borussia/stegemann-entlassung-in-gladbach-so-geht-es-jetzt-weiter-fragen-und-antworten_aid-159052411",
-  "title": "Stegemann-Entlassung in Gladbach: So geht es jetzt weiter",
-  "outlet": "RP Online",
-  "published": "Fri, 27 Nov 2026 11:00:00 GMT",
-  "status": "skipped_paywall",
-  "reason": "short content len=1243",
-  "recorded_at": "2026-11-28T11:31:25+00:00"
- },
- {
-  "url": "https://rp-online.de/sport/fussball/borussia/gladbach-die-wahrheit-des-bvb-spiels-ist-gefaehrlich-im-abstiegskampf_aid-158781587",
-  "title": "Die Wahrheit des BVB-Spiels ist gefährlich im Abstiegskampf",
-  "outlet": "RP Online",
-  "published": "Sun, 22 Nov 2026 11:00:00 GMT",
-  "status": "skipped_paywall",
-  "reason": "short content len=1454",
-  "recorded_at": "2026-11-28T11:31:25+00:00"
- },
- {
-  "url": "https://sport.sky.de/fussball/artikel/borussia-moenchengladbach-trennt-sich-von-stefan-stegemann-fuehrungswechsel-mitten-im-abstiegskampf/13616801/34943",
-  "title": "Borussia Mönchengladbach trennt sich von Stefan ...",
-  "outlet": "Sky Sport",
-  "published": "Thu, 26 Nov 2026 11:00:00 GMT",
-  "status": "skipped_stale",
-  "reason": "2026-11-26 12:00 (>24h)",
-  "recorded_at": "2026-11-28T11:31:25+00:00"
- },
- {
-  "url": "https://sport.sky.de/fussball/artikel/heute-luft-nach-oben-gelassen-stimmen-zu-werder-gegen-gladbach/13617392/34828",
-  "title": "''Heute Luft nach oben gelassen'' - Stimmen zu Werder ...",
-  "outlet": "Sky Sport",
-  "published": "Fri, 27 Nov 2026 23:00:00 GMT",
-  "status": "skipped_irrelevant",
-  "reason": "score=0.34<0.4",
-  "recorded_at": "2026-11-28T11:31:25+00:00"
- },
- {
   "url": "https://rp-online.de/sport/fussball/borussia/gladbach-honorat-doppelpack-reicht-nicht-zum-sieg-3-3-in-bremen_aid-159133127",
   "title": "Gladbach: Honorat-Doppelpack reicht nicht zum Sieg - 3:3 in Bremen",
   "outlet": "RP Online",
@@ -78,5 +33,248 @@
   "status": "posted",
   "reason": "",
   "recorded_at": "2026-11-28T11:32:10+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/werder-bremen-borussia-moenchengladbach-liveticker-zum-spiel_aid-79115875",
+  "title": "Liveticker zum Nachlesen: Schluss in Bremen – Borussia gibt eine 1:3-Führung noch aus der Hand",
+  "outlet": "RP Online",
+  "published": "2026-11-27T22:29:00+01:00",
+  "status": "skipped_irrelevant",
+  "reason": "liveticker",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/gladbach-u23-schliesst-hinrunde-als-dritter-ab-aufstieg-kein-thema_aid-158971659",
+  "title": "„Das beeindruckt mich“: Enache zieht Hinrunden-Bilanz der U23 und lobt Borussias Nachwuchs",
+  "outlet": "RP Online",
+  "published": "2026-11-27T11:07:00+01:00",
+  "status": "skipped_paywall",
+  "reason": "isAccessibleForFree=false",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/stegemann-entlassung-in-gladbach-so-geht-es-jetzt-weiter-fragen-und-antworten_aid-159052411",
+  "title": "Großes Beben in Gladbach: Die wichtigsten Fragen und Antworten zur Stegemann-Entlassung",
+  "outlet": "RP Online",
+  "published": "2026-11-27T09:07:00+01:00",
+  "status": "skipped_paywall",
+  "reason": "isAccessibleForFree=false",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/gladbach-wird-honorat-zu-blessins-jolly-alternative-auf-rechts_aid-158974417",
+  "title": "Bei Scally-Abgang: Wird Honorat zu Gladbachs „Jolly“-Alternative?",
+  "outlet": "RP Online",
+  "published": "2026-11-27T06:13:00+01:00",
+  "status": "skipped_paywall",
+  "reason": "isAccessibleForFree=false",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/gladbach-kleindienst-in-bremen-zurueck-hack-faellt-aus_aid-159042753",
+  "title": "„Zehn Minuten reinwerfen“: Gladbach-Trainer Blessin hofft bei Kleindienst und ordnet Itakuras Situation ein",
+  "outlet": "RP Online",
+  "published": "2026-11-26T15:51:00+01:00",
+  "status": "skipped_paywall",
+  "reason": "isAccessibleForFree=false",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/borussia-moenchengladbach-beurlaubt-ceo-stefan-stegemann_aid-159042249",
+  "title": "Mit sofortiger Wirkung: Borussia beurlaubt CEO Stefan Stegemann",
+  "outlet": "RP Online",
+  "published": "2026-11-26T13:26:00+01:00",
+  "status": "skipped_stale",
+  "reason": "2026-11-26 13:26 (>24h)",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/ex-gladbacher-plea-einst-held-in-bremen-nun-ein-kampf-wie-bei-kleindienst_aid-158855617",
+  "title": "Zweimal Gladbachs Held in Bremen: Ex-Borusse Plea kämpft wie Kleindienst um die dauerhafte Rückkehr",
+  "outlet": "RP Online",
+  "published": "2026-11-26T06:11:00+01:00",
+  "status": "skipped_paywall",
+  "reason": "isAccessibleForFree=false",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-das-sagt-schroeder-zu-einer-boss-befoerderung-6b0ab4247df78695bac96a23",
+  "title": "Borussia Mönchengladbach: DAS sagt Schröder zu einer Boss-Beförderung",
+  "outlet": "Bild",
+  "published": "2026-11-28T11:31:00.436Z",
+  "status": "skipped_paywall",
+  "reason": "isAccessibleForFree=false",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-boss-stegemann-hatte-zoff-mit-bonhof-6b094af63902428a0b4293dd",
+  "title": "Borussia Mönchengladbach: Boss Stegemann hatte Zoff mit Bonhof",
+  "outlet": "Bild",
+  "published": "2026-11-27T14:48:37.239Z",
+  "status": "skipped_paywall",
+  "reason": "isAccessibleForFree=false",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-heimspiel-fuer-fabio-chiarodia-6b0873be1c4d5a00bfba08c8",
+  "title": "Borussia Mönchengladbach: „Heimspiel“ für Fabio Chiarodia",
+  "outlet": "Bild",
+  "published": "2026-11-27T04:31:40.087Z",
+  "status": "skipped_stale",
+  "reason": "2026-11-27 05:31 (>24h)",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-im-chaos-coach-blessin-ueber-das-boss-beben-6b089d5d1c642858307a54dd",
+  "title": "Borussia Mönchengladbach im Chaos: Coach Blessin über das Boss-Beben",
+  "outlet": "Bild",
+  "published": "2026-11-26T21:43:17.272Z",
+  "status": "skipped_stale",
+  "reason": "2026-11-26 22:43 (>24h)",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-boss-muss-sofort-gehen-6b081d041d0c4f9ebad70c73",
+  "title": "Borussia Mönchengladbach: Boss muss sofort gehen!",
+  "outlet": "Bild",
+  "published": "2026-11-26T20:02:15.828Z",
+  "status": "skipped_stale",
+  "reason": "2026-11-26 21:02 (>24h)",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-vertreibt-blessin-nicolas-aus-gladbach-6b070e58d4a4a3142c573a02",
+  "title": "Borussia Mönchengladbach: Vertreibt Blessin Nicolas aus Gladbach?",
+  "outlet": "Bild",
+  "published": "2026-11-26T12:39:57.218Z",
+  "status": "skipped_paywall",
+  "reason": "isAccessibleForFree=false",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-vfl-star-jens-castrop-gegen-werders-top-lauf-6b0701c0bb5effe8198cd4e0",
+  "title": "Borussia Mönchengladbach: VfL-Star Jens Castrop gegen Werders Top-Lauf",
+  "outlet": "Bild",
+  "published": "2026-11-25T16:22:56.708Z",
+  "status": "skipped_stale",
+  "reason": "2026-11-25 17:22 (>24h)",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-gladbach-flop-konoplia-redet-klartext-6b0635c6cd4642ba2eb17a26",
+  "title": "Borussia Mönchengladbach: Gladbach-Flop Konoplia redet Klartext",
+  "outlet": "Bild",
+  "published": "2026-11-25T09:47:25.901Z",
+  "status": "skipped_paywall",
+  "reason": "isAccessibleForFree=false",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/gladbach-droht-der-zerfall-6b0599b7460ead0fdbd80543",
+  "title": "Gladbach droht der Zerfall",
+  "outlet": "Bild",
+  "published": "2026-11-25T07:56:32.616Z",
+  "status": "skipped_paywall",
+  "reason": "isAccessibleForFree=false",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-rouven-schroeder-rueffelt-diese-stars-6b047b4c39a3e8110f0e9337",
+  "title": "Borussia Mönchengladbach: Rouven Schröder rüffelt diese Stars!",
+  "outlet": "Bild",
+  "published": "2026-11-24T14:05:29.149Z",
+  "status": "skipped_paywall",
+  "reason": "isAccessibleForFree=false",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-jens-castrop-feiert-startelf-premiere-6b0441ee172877701c0700ac",
+  "title": "Borussia Mönchengladbach: Jens Castrop feiert Startelf-Premiere",
+  "outlet": "Bild",
+  "published": "2026-11-24T06:31:12.493Z",
+  "status": "skipped_stale",
+  "reason": "2026-11-24 07:31 (>24h)",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-das-ist-die-schmerzgrenze-bei-wael-mohya-6b0477955842ff528b9e62e5",
+  "title": "Borussia Mönchengladbach: DAS ist die Schmerzgrenze bei Wael Mohya",
+  "outlet": "Bild",
+  "published": "2026-11-24T04:31:24.982Z",
+  "status": "skipped_stale",
+  "reason": "2026-11-24 05:31 (>24h)",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.kicker.de/gute-nachrichten-von-kleindienst-und-bolin-aber-sorgen-um-hack-1274665/artikel",
+  "title": "Gladbach: Gute Nachrichten bei Kleindienst und Bolin - Sorgen um Hack - kicker",
+  "outlet": "Kicker",
+  "published": "Tue, 24 Nov 2026 16:59:04 GMT",
+  "status": "skipped_stale",
+  "reason": "2026-11-24 17:59 (>24h)",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.kicker.de/schroeder-sagte-es-hartmann-persoenlich-eine-absolute-fehlentscheidung-1273583/artikel",
+  "title": "Kein Elfer für Gladbach? Schröder: \"Absolute Fehlentscheidung\" - kicker",
+  "outlet": "Kicker",
+  "published": "Sat, 21 Nov 2026 18:19:15 GMT",
+  "status": "skipped_stale",
+  "reason": "2026-11-21 19:19 (>24h)",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://www.kicker.de/bremen-gegen-mgladbach-2026-bundesliga-5226906/spielbericht",
+  "title": "Last-Minute-Werder: Füllkrug rettet gegen Gladbach ein 3:3",
+  "outlet": "Kicker",
+  "published": "Fri, 27 Nov 2026 21:00:00 GMT",
+  "status": "skipped_irrelevant",
+  "reason": "score=0.31<0.4",
+  "recorded_at": "2026-11-28T11:41:19+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/gladbach-mohyas-enttaeuschung-nach-dem-3-3-waren-die-bessere-mannschaft_aid-159140275",
+  "title": "„Waren die bessere Mannschaft“: Moyha spricht über seine Enttäuschung nach dem 3:3",
+  "outlet": "RP Online",
+  "published": "2026-11-28T00:15+01:00",
+  "status": "posted",
+  "reason": "",
+  "recorded_at": "2026-11-28T11:41:40+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/rainer-bonhof-haelt-sich-bedeckt-zum-stegemann-rauswurf-frage-ist-berechtigt_aid-159132159",
+  "title": "„Ehrlicher Schlagabtausch“: Bonhof hält sich bedeckt zum Stegemann-Aus und berichtet von Gespräch mit den Fans",
+  "outlet": "RP Online",
+  "published": "2026-11-27T21:07+01:00",
+  "status": "posted",
+  "reason": "",
+  "recorded_at": "2026-11-28T11:42:07+00:00"
+ },
+ {
+  "url": "https://rp-online.de/sport/fussball/borussia/gladbachs-wael-mohya-spricht-in-podcast-natuerlich-keine-einfache-zeit_aid-159096721",
+  "title": "„Zu meinem Zuhause geworden“: Mohya spricht über einen wahrgewordenen Traum und die Herausforderung Abstiegskampf",
+  "outlet": "RP Online",
+  "published": "2026-11-27T15:56+01:00",
+  "status": "posted",
+  "reason": "",
+  "recorded_at": "2026-11-28T11:42:40+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-ein-gladbach-star-verdient-sich-die-note-1-6b09b3653d0d9d6539f90814",
+  "title": "Borussia Mönchengladbach: Ein Gladbach-Star verdient sich die Note 1",
+  "outlet": "Bild",
+  "published": "2026-11-28T08:48+00:00",
+  "status": "posted",
+  "reason": "",
+  "recorded_at": "2026-11-28T11:43:03+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/wahnsinn-von-niclas-fuellkrug-bei-werder-bremen-gegen-gladbach-6b089ef11c4d5a00bfba0aeb",
+  "title": "Wahnsinn von Niclas Füllkrug bei Werder Bremen gegen Gladbach",
+  "outlet": "Bild",
+  "published": "2026-11-28T08:47+00:00",
+  "status": "posted",
+  "reason": "",
+  "recorded_at": "2026-11-28T11:43:27+00:00"
  }
 ]
