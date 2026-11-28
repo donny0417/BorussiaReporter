@@ -15,6 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 
 import config
+import bild_scraper
 import rp_scraper
 
 # 도메인 -> (표시명, 언어, 게시판 키). 게시판 키는 config.menu_id_for()의 환경변수 접미사로 쓰인다.
@@ -24,6 +25,8 @@ OUTLETS = {
     "bild.de": ("Bild", "de", "BILD"),
     "kicker.de": ("Kicker", "de", "KICKER"),
 }
+# 직접 스크랩 가능한 매체(도메인 -> 모듈). Kicker는 봇 차단(DataDome), Sky는 403이라 Tavily 사용
+DIRECT_SCRAPERS = {"rp-online.de": rp_scraper, "bild.de": bild_scraper}
 QUERY = "Borussia Mönchengladbach Gladbach"  # 도메인별로 1회씩 검색(편중 방지)
 DAYS = 2  # Tavily 검색 범위(일 단위). 정확한 시간 필터는 아래 is_fresh()가 담당
 BERLIN = ZoneInfo("Europe/Berlin")
@@ -273,12 +276,12 @@ def download_lead_image(url):
 
 
 # ---------- 수집 ----------
-def _add_rp_candidates(candidates, seen):
-    """RP 기사를 직접 스크랩해 Tavily 결과와 같은 형태로 candidates에 넣는다. 스크랩 불가면 False."""
+def _add_direct_candidates(candidates, seen, scraper):
+    """직접 스크랩한 기사를 Tavily 결과와 같은 형태로 candidates에 넣는다. 스크랩 불가면 False."""
     try:
-        arts = rp_scraper.collect(skip_urls=seen)
+        arts = scraper.collect(skip_urls=seen)
     except Exception as e:
-        print(f"⚠️ RP 스크랩 오류: {e}")
+        print(f"⚠️ 직접 스크랩 오류 ({scraper.__name__}): {e}")
         return False
     if arts is None:
         return False
@@ -335,9 +338,11 @@ def fetch(history=None):
     client = TavilyClient(api_key=config.TAVILY_API_KEY)
 
     candidates = {}
-    rp_ok = _add_rp_candidates(candidates, seen)   # 성공하면 RP는 Tavily 검색에서 제외(크레딧 절약)
+    # 직접 스크랩에 성공한 매체는 Tavily 검색에서 제외(크레딧 절약). 실패하면 Tavily로 대체한다.
+    scraped = {domain for domain, scraper in DIRECT_SCRAPERS.items()
+               if _add_direct_candidates(candidates, seen, scraper)}
     for domain in OUTLETS:
-        if domain == "rp-online.de" and rp_ok:
+        if domain in scraped:
             continue
         try:
             res = client.search(
