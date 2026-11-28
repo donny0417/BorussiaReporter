@@ -11,7 +11,8 @@ NAVER_CLUB_ID = os.getenv("NAVER_CLUB_ID")
 NAVER_MENU_ID = os.getenv("NAVER_MENU_ID")
 
 # --- 외부 기사(Tavily) 설정 ---
-TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+# Secret에 공백/줄바꿈/따옴표가 섞여 들어가는 경우가 많아 정리한다
+TAVILY_API_KEY = (os.getenv("TAVILY_API_KEY") or "").strip().strip("\"'")
 EXTERNAL_ENABLED = os.getenv("EXTERNAL_ENABLED", "1") == "1"
 EXTERNAL_MAX_POSTS = int(os.getenv("EXTERNAL_MAX_POSTS", "5"))
 

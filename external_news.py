@@ -97,6 +97,8 @@ def fetch(history=None):
     if not config.TAVILY_API_KEY:
         print("⚠️ TAVILY_API_KEY 없음 - 외부 기사 수집 건너뜀")
         return []
+    if not config.TAVILY_API_KEY.startswith("tvly-"):
+        print("⚠️ TAVILY_API_KEY가 'tvly-'로 시작하지 않습니다. 키 값을 다시 확인하세요.")
     history = history if history is not None else load_history()
     seen = _seen_urls(history)
     client = TavilyClient(api_key=config.TAVILY_API_KEY)
@@ -115,6 +117,9 @@ def fetch(history=None):
             )
         except Exception as e:
             print(f"⚠️ Tavily 검색 실패 ({q}): {e}")
+            if "api key" in str(e).lower() or "unauthorized" in str(e).lower():
+                print("❌ Tavily 인증 오류 - 이후 쿼리를 중단합니다. GitHub Secret TAVILY_API_KEY를 확인하세요.")
+                break
             continue
         for r in res.get("results", []):
             url = r.get("url")
