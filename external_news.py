@@ -262,6 +262,31 @@ def download_lead_image(url):
 
 
 # ---------- 수집 ----------
+def _fill_missing_content(client, candidates):
+    """Tavily 검색이 raw_content를 비워 보낸 기사(Bild/RP에서 자주 발생)를 extract API로 보충한다.
+    제목/URL이 BMG 관련인 것만 대상으로 해 크레딧을 아끼며(5 URL당 1크레딧), 실패해도 조용히 넘어간다."""
+    missing = [u for u, r in candidates.items()
+               if not (r.get("raw_content") or "").strip()
+               and RELEVANT_RE.search(f"{r.get('title', '')} {u}")
+               and r.get("score", 1) >= MIN_SCORE]
+    if not missing:
+        return
+    filled = 0
+    for i in range(0, len(missing), 20):   # extract는 한 번에 최대 20 URL
+        chunk = missing[i:i + 20]
+        try:
+            res = client.extract(urls=chunk, extract_depth="basic")
+        except Exception as e:
+            print(f"⚠️ Tavily extract 실패 ({len(chunk)}건): {e}")
+            continue
+        for item in res.get("results", []):
+            text = (item.get("raw_content") or "").strip()
+            if text and item.get("url") in candidates:
+                candidates[item["url"]]["raw_content"] = text
+                filled += 1
+    print(f"🧩 본문이 비어 있던 {len(missing)}건 중 {filled}건을 extract로 보충")
+
+
 def fetch(history=None):
     """새로 번역할 외부 기사 리스트를 반환한다. history는 스킵 기록이 추가되어 갱신된다."""
     from tavily import TavilyClient
@@ -301,6 +326,8 @@ def fetch(history=None):
             url = r.get("url")
             if url and url not in seen and url not in candidates:
                 candidates[url] = r
+
+    _fill_missing_content(client, candidates)
 
     articles = []
     for url, r in sorted(candidates.items(), key=lambda kv: kv[1].get("score", 0), reverse=True):
