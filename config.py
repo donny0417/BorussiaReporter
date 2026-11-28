@@ -17,6 +17,7 @@ EXTERNAL_ENABLED = os.getenv("EXTERNAL_ENABLED", "1") == "1"
 EXTERNAL_MAX_POSTS = int(os.getenv("EXTERNAL_MAX_POSTS", "5"))
 # 외부 기사 처리 방식: summary(기본, 인터뷰/기자회견만 전문 번역) | full(전부 전문 번역)
 EXTERNAL_MODE = os.getenv("EXTERNAL_MODE", "summary").lower()
+EXTERNAL_MAX_AGE_HOURS = int(os.getenv("EXTERNAL_MAX_AGE_HOURS", "24"))  # 게시 시각 기준 이 시간 이내 기사만
 RESET_SKIPPED = os.getenv("RESET_SKIPPED", "0") == "1"  # 이전에 skipped로 기록된 URL을 다시 평가
 
 # --- 게시 대상 전환: 기본값 test (실수로 본 카페에 올라가는 것을 방지) ---

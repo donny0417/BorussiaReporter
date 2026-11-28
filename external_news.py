@@ -7,6 +7,8 @@ import json
 import os
 import re
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+from zoneinfo import ZoneInfo
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -22,7 +24,8 @@ OUTLETS = {
     "kicker.de": ("Kicker", "de", "KICKER"),
 }
 QUERY = "Borussia Mönchengladbach Gladbach"  # 도메인별로 1회씩 검색(편중 방지)
-DAYS = 3
+DAYS = 2  # Tavily 검색 범위(일 단위). 정확한 시간 필터는 아래 is_fresh()가 담당
+BERLIN = ZoneInfo("Europe/Berlin")
 RESULTS_PER_DOMAIN = 5
 PAYWALL_HEAD_CHARS = 600  # 내비/푸터의 상시 노출 문구 오판 방지: 제목+본문 앞부분만 검사
 MIN_IMAGE_BYTES = 10 * 1024  # 이보다 작으면 로고/플레이스홀더로 보고 첨부 안 함
@@ -60,7 +63,7 @@ def save_history(history):
 
 
 def record(history, article, status, reason=""):
-    """status: posted | skipped_paywall | skipped_irrelevant | failed. reason은 스킵 원인 요약(본문 아님)."""
+    """status: posted | skipped_paywall | skipped_irrelevant | skipped_stale | failed. reason은 스킵 원인 요약(본문 아님)."""
     history.append({
         "url": article["url"],
         "title": article.get("title", ""),
@@ -135,8 +138,31 @@ def format_title(text, outlet):
 
 
 # ---------- 대표 사진 ----------
-def fetch_lead_image(url):
-    """기사 페이지의 og:image(없으면 twitter:image) URL을 반환. 실패하면 None."""
+_PAGE_CACHE = {}
+
+
+def _find_date_published(node):
+    """JSON-LD 구조에서 datePublished를 재귀적으로 찾는다."""
+    if isinstance(node, dict):
+        if node.get("datePublished"):
+            return node["datePublished"]
+        for v in node.values():
+            found = _find_date_published(v)
+            if found:
+                return found
+    elif isinstance(node, list):
+        for v in node:
+            found = _find_date_published(v)
+            if found:
+                return found
+    return None
+
+
+def fetch_page_meta(url):
+    """기사 페이지를 한 번만 받아 대표 사진(og:image)과 게시 시각을 추출한다. 실패해도 예외 없이 빈 값."""
+    if url in _PAGE_CACHE:
+        return _PAGE_CACHE[url]
+    meta = {"image": None, "published": None}
     try:
         resp = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "de,en;q=0.8"}, timeout=15)
         resp.raise_for_status()
@@ -144,10 +170,80 @@ def fetch_lead_image(url):
         for attrs in ({"property": "og:image"}, {"name": "twitter:image"}, {"property": "og:image:url"}):
             tag = soup.find("meta", attrs=attrs)
             if tag and tag.get("content"):
-                return urljoin(url, tag["content"].strip())
+                meta["image"] = urljoin(url, tag["content"].strip())
+                break
+        for attrs in ({"property": "article:published_time"}, {"name": "article:published_time"},
+                      {"property": "og:article:published_time"}, {"itemprop": "datePublished"},
+                      {"name": "date"}, {"name": "pubdate"}, {"name": "publish-date"}, {"name": "DC.date.issued"}):
+            tag = soup.find("meta", attrs=attrs)
+            value = tag.get("content") or tag.get("datetime") if tag else None
+            if value:
+                meta["published"] = value.strip()
+                break
+        if not meta["published"]:
+            for script in soup.find_all("script", type="application/ld+json"):
+                try:
+                    meta["published"] = _find_date_published(json.loads(script.string or ""))
+                except Exception:
+                    continue
+                if meta["published"]:
+                    break
+        if not meta["published"]:
+            t = soup.find("time", attrs={"datetime": True})
+            if t:
+                meta["published"] = t["datetime"].strip()
     except Exception as e:
-        print(f"      ⚠️ 대표 사진 확인 실패 ({urlparse(url).hostname}): {e}")
-    return None
+        print(f"      ⚠️ 기사 페이지 확인 실패 ({urlparse(url).hostname}): {e}")
+    _PAGE_CACHE[url] = meta
+    return meta
+
+
+def fetch_lead_image(url):
+    """기사 페이지의 대표 사진 URL. 실패하면 None."""
+    return fetch_page_meta(url)["image"]
+
+
+# ---------- 게시 시각(24시간 이내) 필터 ----------
+def parse_datetime(value):
+    """문자열 -> (aware datetime, 시각 포함 여부). 해석 불가면 None. 시간대 없으면 독일 시간으로 간주."""
+    if not value:
+        return None
+    value = str(value).strip()
+    dt = None
+    try:
+        dt = parsedate_to_datetime(value)          # RFC 822 (Tavily)
+    except Exception:
+        try:
+            dt = datetime.fromisoformat(value.replace("Z", "+00:00"))  # ISO 8601 (페이지 메타)
+        except Exception:
+            return None
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=BERLIN)
+    return dt, bool(re.search(r"\d{1,2}:\d{2}", value))
+
+
+def resolve_published(tavily_value, url):
+    """Tavily 날짜에 시각이 있으면 그대로, 없으면 기사 페이지 메타에서 보강한다. (dt, has_time) 또는 None."""
+    p = parse_datetime(tavily_value)
+    if p and p[1]:
+        return p
+    page = parse_datetime(fetch_page_meta(url)["published"])
+    return page or p
+
+
+def is_fresh(published, now=None):
+    """True/False, 게시 시각을 알 수 없으면 None. 날짜만 알면(시각 없음) 오늘·어제(독일 날짜) 기사를 허용한다."""
+    if not published:
+        return None
+    dt, has_time = published
+    now = now or datetime.now(timezone.utc)
+    if has_time:
+        age_hours = (now - dt).total_seconds() / 3600
+        return -1 <= age_hours <= config.EXTERNAL_MAX_AGE_HOURS   # -1: 시계 오차 허용
+    days = (now.astimezone(BERLIN).date() - dt.astimezone(BERLIN).date()).days
+    return 0 <= days <= -(-config.EXTERNAL_MAX_AGE_HOURS // 24)
 
 
 def download_lead_image(url):
@@ -228,6 +324,15 @@ def fetch(history=None):
                   f"score={r.get('score', 0):.2f}): {art['title'][:50]}")
             record(history, art, status, why)
             continue
+        published = resolve_published(r.get("published_date"), url)
+        fresh = is_fresh(published)
+        if fresh is not True:
+            why = ("게시 시각 불명" if published is None
+                   else f"{published[0].astimezone(BERLIN):%Y-%m-%d %H:%M} (>{config.EXTERNAL_MAX_AGE_HOURS}h)")
+            print(f"   ⏭️ [{outlet}] skipped_stale ({why}): {art['title'][:50]}")
+            record(history, art, "skipped_stale", why)
+            continue
+        art["published_date"] = published[0].isoformat(timespec="minutes")
         if len(articles) >= config.EXTERNAL_MAX_POSTS:
             continue  # 상한 초과분은 기록하지 않아 다음 실행에서 다시 후보가 된다
         articles.append(art)
