@@ -31,7 +31,7 @@ def run_external(token):
         if not token:
             external_news.record(history, art, 'failed')
             continue
-        ok = uploader.upload_single_article(post, token)
+        ok = uploader.upload_single_article(post, token, menu_id=config.menu_id_for(art['key']))
         external_news.record(history, art, 'posted' if ok else 'failed')
         print(f"{'✅' if ok else '❌'} 외부 기사 업로드 [{art['outlet']}] {art['title'][:40]}")
         if i < len(articles) - 1:

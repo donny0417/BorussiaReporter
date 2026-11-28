@@ -48,6 +48,15 @@ jobs:
         NAVER_MENU_ID: ${{ secrets.NAVER_MENU_ID }}
         NAVER_CLUB_ID_TEST: ${{ secrets.NAVER_CLUB_ID_TEST }}
         NAVER_MENU_ID_TEST: ${{ secrets.NAVER_MENU_ID_TEST }}
+        # 언론사별 게시판 (미설정 시 기본 게시판으로 업로드). 본 카페용은 접미사 _TEST 없는 이름
+        NAVER_MENU_ID_RP_TEST: ${{ secrets.NAVER_MENU_ID_RP_TEST }}
+        NAVER_MENU_ID_SKY_TEST: ${{ secrets.NAVER_MENU_ID_SKY_TEST }}
+        NAVER_MENU_ID_BILD_TEST: ${{ secrets.NAVER_MENU_ID_BILD_TEST }}
+        NAVER_MENU_ID_KICKER_TEST: ${{ secrets.NAVER_MENU_ID_KICKER_TEST }}
+        NAVER_MENU_ID_RP: ${{ secrets.NAVER_MENU_ID_RP }}
+        NAVER_MENU_ID_SKY: ${{ secrets.NAVER_MENU_ID_SKY }}
+        NAVER_MENU_ID_BILD: ${{ secrets.NAVER_MENU_ID_BILD }}
+        NAVER_MENU_ID_KICKER: ${{ secrets.NAVER_MENU_ID_KICKER }}
         TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
         # 스케줄 실행은 inputs가 비어 TARGET 기본값(test)이 적용됨. 본 카페 전환은 아래 'test'를 'prod'로 변경
         TARGET: ${{ github.event.inputs.target || 'test' }}

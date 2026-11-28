@@ -25,6 +25,14 @@ if TARGET == "prod":
 else:
     TARGET_CLUB_ID, TARGET_MENU_ID = NAVER_CLUB_ID_TEST, NAVER_MENU_ID_TEST
 
+
+def menu_id_for(outlet_key):
+    """언론사별 게시판 ID. 예) TARGET=test, RP -> NAVER_MENU_ID_RP_TEST (prod는 NAVER_MENU_ID_RP).
+    설정되지 않았으면 기본 게시판(TARGET_MENU_ID)으로 올린다."""
+    suffix = "_TEST" if TARGET != "prod" else ""
+    return os.getenv(f"NAVER_MENU_ID_{outlet_key}{suffix}") or TARGET_MENU_ID
+
+
 # [경로 설정 수정]
 # GitHub Actions 서버는 경로 구조가 다르므로 __file__을 기준으로 잡는 게 가장 안전합니다.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

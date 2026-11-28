@@ -11,11 +11,12 @@ from urllib.parse import urlparse
 
 import config
 
+# 도메인 -> (표시명, 언어, 게시판 키). 게시판 키는 config.menu_id_for()의 환경변수 접미사로 쓰인다.
 OUTLETS = {
-    "rp-online.de": ("RP Online", "de"),
-    "skysports.com": ("Sky Sports", "en"),
-    "bild.de": ("Bild", "de"),
-    "kicker.de": ("Kicker", "de"),
+    "rp-online.de": ("RP Online", "de", "RP"),
+    "sport.sky.de": ("Sky Sport", "de", "SKY"),
+    "bild.de": ("Bild", "de", "BILD"),
+    "kicker.de": ("Kicker", "de", "KICKER"),
 }
 QUERIES = ["Borussia Mönchengladbach", "Gladbach Fohlen"]
 
@@ -28,7 +29,7 @@ RELEVANT_RE = re.compile(r"gladbach|mönchengladbach|moenchengladbach|borussia|f
 PAYWALL_RE = re.compile(
     r"BILDplus|BILD\s?plus|Bild\+|kicker\s?plus|\bRP\+|RP\s?Plus|Plus-Artikel|"
     r"Jetzt weiterlesen|weiterlesen mit|Nur für Abonnenten|Exklusiv für Abonnenten|"
-    r"subscribe to continue|Sky Sports\+? subscribers only",
+    r"Sky Q|WOW-Abo|mit WOW|Sky Sport Abo",
     re.I,
 )
 PAYWALL_URL_RE = re.compile(r"/plus/|bild-plus|/plus-|kicker-plus", re.I)
@@ -125,11 +126,12 @@ def fetch(history=None):
         info = _outlet_of(url)
         if not info:
             continue
-        outlet, lang = info
+        outlet, lang, key = info
         art = {
             "title": (r.get("title") or "").strip(),
             "url": url,
             "outlet": outlet,
+            "key": key,
             "lang": lang,
             "content": (r.get("raw_content") or "")[:MAX_CONTENT_CHARS],
             "published_date": r.get("published_date", ""),
