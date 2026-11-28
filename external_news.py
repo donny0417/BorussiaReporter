@@ -101,7 +101,7 @@ def classify(result):
     title = result.get("title", "") or ""
     content = result.get("raw_content") or ""
     score = result.get("score", 1)
-    if score < MIN_SCORE:
+    if score < MIN_SCORE and not RELEVANT_RE.search(f"{title} {url}"):  # 제목/URL에 팀명이 있으면 점수가 낮아도 후보
         return "skipped_irrelevant", f"score={score:.2f}<{MIN_SCORE}"
     # 제목에 팀명이 없어도 URL(borussia-moenchengladbach 등)에 있으면 관련 기사로 본다
     if not RELEVANT_RE.search(f"{title} {url} {content[:3000]}"):
@@ -127,8 +127,7 @@ def classify(result):
 # ---------- 처리 방식 결정 ----------
 # 인터뷰/기자회견은 발언 맥락이 중요하므로 전문 번역, 나머지는 요약
 FULL_TRANSLATION_RE = re.compile(
-    r"interview|\bstimmen\b|pressekonferenz|\bpk\b|spricht|im gespräch|im gespraech|"
-    r"exklusiv-interview|\bklartext\b|\bzitate\b",
+    r"interview|\bstimmen\b|pressekonferenz|\bpk\b|im gespräch|im gespraech",
     re.I,
 )
 
@@ -300,8 +299,7 @@ def _fill_missing_content(client, candidates):
     제목/URL이 BMG 관련인 것만 대상으로 해 크레딧을 아끼며(5 URL당 1크레딧), 실패해도 조용히 넘어간다."""
     missing = [u for u, r in candidates.items()
                if not (r.get("raw_content") or "").strip()
-               and RELEVANT_RE.search(f"{r.get('title', '')} {u}")
-               and r.get("score", 1) >= MIN_SCORE]
+               and RELEVANT_RE.search(f"{r.get('title', '')} {u}")]
     if not missing:
         return
     filled = 0
@@ -318,6 +316,28 @@ def _fill_missing_content(client, candidates):
                 candidates[item["url"]]["raw_content"] = text
                 filled += 1
     print(f"🧩 본문이 비어 있던 {len(missing)}건 중 {filled}건을 extract로 보충")
+
+
+def select_balanced(passed, max_total=None, max_per_outlet=None):
+    """통과 기사를 매체별 최신순 큐로 나눠 라운드로빈으로 뽑는다(총 상한, 매체당 상한 적용).
+    하루 1회 실행 + 24시간 필터라 상한 밖 기사는 사라지므로, 특정 매체가 상한을 독점하지 않게 한다."""
+    max_total = max_total or config.EXTERNAL_MAX_POSTS
+    max_per_outlet = max_per_outlet or config.EXTERNAL_MAX_PER_OUTLET
+    queues = {}
+    for dt, art in sorted(passed, key=lambda x: x[0], reverse=True):
+        queues.setdefault(art["key"], []).append((dt, art))
+    picked, taken = [], {k: 0 for k in queues}
+    while len(picked) < max_total:
+        progressed = False
+        # 이번 라운드는 가장 최신 기사를 가진 매체부터
+        for key in sorted((k for k in queues if queues[k]), key=lambda k: queues[k][0][0], reverse=True):
+            if taken[key] < max_per_outlet and len(picked) < max_total:
+                picked.append(queues[key].pop(0)[1])
+                taken[key] += 1
+                progressed = True
+        if not progressed:
+            break
+    return picked
 
 
 def fetch(history=None):
@@ -367,7 +387,7 @@ def fetch(history=None):
 
     _fill_missing_content(client, candidates)
 
-    articles = []
+    passed = []   # (게시 시각, 기사) — 필터를 통과한 기사. 마지막에 매체별로 고르게 선택한다
     for url, r in sorted(candidates.items(), key=lambda kv: kv[1].get("score", 0), reverse=True):
         info = _outlet_of(url)
         if not info:
@@ -398,8 +418,9 @@ def fetch(history=None):
             record(history, art, "skipped_stale", why)
             continue
         art["published_date"] = published[0].isoformat(timespec="minutes")
-        if len(articles) >= config.EXTERNAL_MAX_POSTS:
-            continue  # 상한 초과분은 기록하지 않아 다음 실행에서 다시 후보가 된다
-        articles.append(art)
-    print(f"📰 외부 기사 후보 {len(candidates)}건 → 번역 대상 {len(articles)}건")
+        passed.append((published[0], art))
+
+    articles = select_balanced(passed)
+    print(f"📰 외부 기사 후보 {len(candidates)}건 → 필터 통과 {len(passed)}건 → 번역 대상 {len(articles)}건"
+          + (f" (상한으로 제외 {len(passed) - len(articles)}건)" if len(passed) > len(articles) else ""))
     return articles

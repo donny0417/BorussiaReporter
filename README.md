@@ -19,3 +19,5 @@ Translate articles from borussia.de and post it on Naver Cafe Borussia Park Kore
 외부 기사는 게시 시각 기준 24시간 이내(`EXTERNAL_MAX_AGE_HOURS`)만 올립니다. 게시 시각은 Tavily 날짜에 시각이 없으면 기사 페이지 메타(article:published_time, JSON-LD 등)로 보강하며, 끝내 알 수 없으면 스킵합니다.
 
 RP Online(`rp_scraper.py`)과 Bild(`bild_scraper.py`)는 Tavily 대신 직접 스크랩합니다(목록 → 기사 페이지의 게시 시각/`isAccessibleForFree`/본문). 목록을 못 읽으면 해당 매체는 자동으로 Tavily로 대체됩니다. Kicker(봇 차단)와 Sky(403)는 Tavily를 씁니다. 라이브티커 기사는 제외합니다.
+
+1회 업로드 상한은 `EXTERNAL_MAX_POSTS`(기본 8), 매체당 `EXTERNAL_MAX_PER_OUTLET`(기본 3)이며 매체별 라운드로빈으로 고릅니다. 전문 번역은 제목/URL에 Interview·Stimmen·Pressekonferenz·PK·im Gespräch가 있는 기사만 해당합니다.

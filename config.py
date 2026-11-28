@@ -14,7 +14,8 @@ NAVER_MENU_ID = os.getenv("NAVER_MENU_ID")
 # Secret에 공백/줄바꿈/따옴표가 섞여 들어가는 경우가 많아 정리한다
 TAVILY_API_KEY = (os.getenv("TAVILY_API_KEY") or "").strip().strip("\"'")
 EXTERNAL_ENABLED = os.getenv("EXTERNAL_ENABLED", "1") == "1"
-EXTERNAL_MAX_POSTS = int(os.getenv("EXTERNAL_MAX_POSTS", "5"))
+EXTERNAL_MAX_POSTS = int(os.getenv("EXTERNAL_MAX_POSTS", "8"))          # 1회 실행당 총 상한
+EXTERNAL_MAX_PER_OUTLET = int(os.getenv("EXTERNAL_MAX_PER_OUTLET", "3"))  # 매체당 상한(한 매체 쏠림 방지)
 # 외부 기사 처리 방식: summary(기본, 인터뷰/기자회견만 전문 번역) | full(전부 전문 번역)
 EXTERNAL_MODE = os.getenv("EXTERNAL_MODE", "summary").lower()
 EXTERNAL_MAX_AGE_HOURS = int(os.getenv("EXTERNAL_MAX_AGE_HOURS", "24"))  # 게시 시각 기준 이 시간 이내 기사만
