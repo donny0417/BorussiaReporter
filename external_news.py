@@ -6,7 +6,7 @@
 import json
 import os
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from zoneinfo import ZoneInfo
 from urllib.parse import urljoin, urlparse
@@ -28,7 +28,7 @@ OUTLETS = {
 # 직접 스크랩 가능한 매체(도메인 -> 모듈). Kicker는 봇 차단(DataDome), Sky는 403이라 Tavily 사용
 DIRECT_SCRAPERS = {"rp-online.de": rp_scraper, "bild.de": bild_scraper}
 QUERY = "Borussia Mönchengladbach Gladbach"  # 도메인별로 1회씩 검색(편중 방지)
-DAYS = 2  # Tavily 검색 범위(일 단위). 정확한 시간 필터는 아래 is_fresh()가 담당
+DAYS = max(1, -(-config.EXTERNAL_MAX_AGE_HOURS // 24))  # Tavily 검색 범위(일). 24시간이면 1일 — 날짜 없는 결과도 이 범위 안으로 본다
 BERLIN = ZoneInfo("Europe/Berlin")
 RESULTS_PER_DOMAIN = 5
 PAYWALL_HEAD_CHARS = 600  # 내비/푸터의 상시 노출 문구 오판 방지: 제목+본문 앞부분만 검사
@@ -296,10 +296,11 @@ def _add_direct_candidates(candidates, seen, scraper):
 
 
 def _fill_missing_content(client, candidates):
-    """Tavily 검색이 raw_content를 비워 보낸 기사(Bild/RP에서 자주 발생)를 extract API로 보충한다.
+    """Tavily 검색이 raw_content를 비우거나 너무 짧게 보낸 기사를 extract API로 보충한다.
     제목/URL이 BMG 관련인 것만 대상으로 해 크레딧을 아끼며(5 URL당 1크레딧), 실패해도 조용히 넘어간다."""
     missing = [u for u, r in candidates.items()
-               if not (r.get("raw_content") or "").strip()
+               if len((r.get("raw_content") or "").strip()) < MIN_CONTENT_CHARS
+               and not r.get("_trusted")
                and RELEVANT_RE.search(f"{r.get('title', '')} {u}")]
     if not missing:
         return
@@ -313,10 +314,11 @@ def _fill_missing_content(client, candidates):
             continue
         for item in res.get("results", []):
             text = (item.get("raw_content") or "").strip()
-            if text and item.get("url") in candidates:
+            cur = candidates.get(item.get("url"), {}).get("raw_content") or ""
+            if text and len(text) > len(cur) and item.get("url") in candidates:
                 candidates[item["url"]]["raw_content"] = text
                 filled += 1
-    print(f"🧩 본문이 비어 있던 {len(missing)}건 중 {filled}건을 extract로 보충")
+    print(f"🧩 본문이 비었거나 짧던 {len(missing)}건 중 {filled}건을 extract로 보충")
 
 
 # ---------- 공식 기사와의 중복 제거 ----------
@@ -486,6 +488,7 @@ def fetch(history=None, official=None):
         for r in res.get("results", []):
             url = r.get("url")
             if url and url not in seen and url not in candidates:
+                r["_tavily_window"] = True   # Tavily가 DAYS 범위 안으로 걸러 준 결과
                 candidates[url] = r
 
     _fill_missing_content(client, candidates)
@@ -514,6 +517,12 @@ def fetch(history=None, official=None):
             continue
         published = resolve_published(r.get("published_date"), url)
         fresh = is_fresh(published)
+        if published is None and r.get("_tavily_window"):
+            # Tavily가 날짜를 주지 않고 사이트(Kicker 등)가 봇 차단으로 읽히지 않는 경우:
+            # 최근 DAYS일 범위로 검색된 결과이므로 허용한다(시각 순서는 범위 중간값으로 취급)
+            published = (datetime.now(timezone.utc) - timedelta(hours=config.EXTERNAL_MAX_AGE_HOURS / 2), False)
+            print(f"   🕒 [{outlet}] 게시 시각 불명 - Tavily {DAYS}일 검색 결과로 간주: {art['title'][:40]}")
+            fresh = True
         if fresh is not True:
             why = ("게시 시각 불명" if published is None
                    else f"{published[0].astimezone(BERLIN):%Y-%m-%d %H:%M} (>{config.EXTERNAL_MAX_AGE_HOURS}h)")
