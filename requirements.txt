@@ -2,6 +2,7 @@ playwright==1.65.2
 beautifulsoup4==4.12.3
 requests==2.32.3
 python-dotenv==1.0.1
-langchain-google-genai==2.0.9
-langchain-core==0.3.33
+langchain-google-genai==4.5.3
+langchain-core==1.8.5
 nest_asyncio==1.6.0
+tavily-python==0.8.5

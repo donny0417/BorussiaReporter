@@ -4,6 +4,20 @@ on:
   schedule:
     - cron: '17 20 * * *'
   workflow_dispatch: # 이 설정이 있어야 "Run workflow" 버튼이 생깁니다!
+    inputs:
+      target:
+        description: '게시 대상 (test = 모의 카페, prod = 본 카페)'
+        default: 'test'
+        type: choice
+        options: [test, prod]
+      dry_run:
+        description: 'DRY_RUN (번역만 하고 업로드 안 함)'
+        default: false
+        type: boolean
+      reset_skipped:
+        description: '이전에 스킵(유료/무관)된 외부 기사를 다시 평가'
+        default: false
+        type: boolean
 
 jobs:
   build:
@@ -20,7 +34,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: '3.12'
 
     - name: Install dependencies
       run: |
@@ -36,13 +50,30 @@ jobs:
         NAVER_REFRESH_TOKEN: ${{ secrets.NAVER_REFRESH_TOKEN }}
         NAVER_CLUB_ID: ${{ secrets.NAVER_CLUB_ID }}
         NAVER_MENU_ID: ${{ secrets.NAVER_MENU_ID }}
+        NAVER_CLUB_ID_TEST: ${{ secrets.NAVER_CLUB_ID_TEST }}
+        NAVER_MENU_ID_TEST: ${{ secrets.NAVER_MENU_ID_TEST }}
+        # 언론사별 게시판 (미설정 시 기본 게시판으로 업로드). 본 카페용은 접미사 _TEST 없는 이름
+        NAVER_MENU_ID_RP_TEST: ${{ secrets.NAVER_MENU_ID_RP_TEST }}
+        NAVER_MENU_ID_SKY_TEST: ${{ secrets.NAVER_MENU_ID_SKY_TEST }}
+        NAVER_MENU_ID_BILD_TEST: ${{ secrets.NAVER_MENU_ID_BILD_TEST }}
+        NAVER_MENU_ID_KICKER_TEST: ${{ secrets.NAVER_MENU_ID_KICKER_TEST }}
+        NAVER_MENU_ID_RP: ${{ secrets.NAVER_MENU_ID_RP }}
+        NAVER_MENU_ID_SKY: ${{ secrets.NAVER_MENU_ID_SKY }}
+        NAVER_MENU_ID_BILD: ${{ secrets.NAVER_MENU_ID_BILD }}
+        NAVER_MENU_ID_KICKER: ${{ secrets.NAVER_MENU_ID_KICKER }}
+        TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        # 스케줄 실행은 inputs가 비어 TARGET 기본값(test)이 적용됨. 본 카페 전환은 아래 'test'를 'prod'로 변경
+        TARGET: ${{ github.event.inputs.target || 'test' }}
+        DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+        EXTERNAL_MODE: ${{ vars.EXTERNAL_MODE || 'summary' }}
+        RESET_SKIPPED: ${{ github.event.inputs.reset_skipped == 'true' && '1' || '0' }}
       run: python main.py
 
     - name: Commit and Push History
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add processed_titles.txt
+        git add processed_titles.txt data
         # 변경사항이 있을 때만 커밋 (중복 방지용 히스토리 업데이트)
         git commit -m "Update news history [skip ci]" || echo "No changes to commit"
         git push

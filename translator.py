@@ -18,16 +18,80 @@ rate_limiter = InMemoryRateLimiter(
 # 2. LLM 모델 전역 객체 생성 (재사용 가능)
 llm = ChatGoogleGenerativeAI(
     model='gemini-3.6-flash',
-    temperature=0.2,
+    # temperature는 이 모델이 고정 샘플링을 쓰므로 무시된다(지정하면 경고만 발생) — 지정하지 않는다
     rate_limiter=rate_limiter
 )
 
-def translate_article(raw_content):
+def _text(response):
+    """모델 응답에서 텍스트만 꺼낸다. 최신 langchain은 content가 블록 리스트일 수 있어 .text를 쓴다
+    (구버전의 .text()는 메서드, 신버전은 프로퍼티라 둘 다 처리)."""
+    text = response.text
+    if not isinstance(text, str) and callable(text):   # 구버전: .text()가 메서드
+        text = text()
+    return str(text)
+
+
+EXTERNAL_RULES = '''
+
+[외부 매체 기사 추가 규칙]
+이 기사는 구단 공식 사이트가 아닌 외부 매체({outlet}, 원문 언어: {lang_name})의 보도입니다.
+1. [제목 예외] 외부 기사는 제목 앞에 <카테고리> 태그 등 어떤 머리말도 붙이지 마세요(매체명은 시스템이 자동으로 붙입니다). 위 '제목 작성 규칙'의 태그 규칙은 적용하지 않으며, 제목은 ## 뒤에 기사 내용을 요약한 평서문만 씁니다.
+2. 사실 확정이 아닌 내용은 "{outlet}은 ~라고 보도했습니다", "~할 가능성이 있다고 전했습니다"처럼 반드시 매체에 귀속시켜 서술하세요.
+3. 본문과 무관한 관련기사 목록, 광고, 구독 안내, 댓글, 작성자 소개 등은 모두 삭제하세요.
+4. 기사 본문에 보루시아 묀헨글라트바흐와 무관한 다른 경기·팀 기사 부분이 섞여 있으면 번역하지 마세요.
+5. 시간 표기는 기존 규칙(독일 현지 시간 + 한국 시간 병기)을 그대로 따르세요.
+'''
+
+LANG_NAMES = {'de': '독일어', 'en': '영어'}
+
+SUMMARY_PROMPT = '''[Role]
+당신은 독일 분데스리가 '보루시아 묀헨글라트바흐(BMG)' 전담 스포츠 통신원입니다. 외부 매체({outlet}, 원문 언어: {lang_name})의 기사를 한국 팬 커뮤니티 회원들이 빠르게 훑어볼 수 있도록 정확하게 요약합니다.
+
+[Output Format]
+1. 첫 줄: ## 뒤에 기사 핵심을 담은 평서문 제목 한 줄. <카테고리> 태그 등 어떤 머리말도 붙이지 마세요(매체명은 시스템이 자동으로 붙입니다). 제목에 마크다운 강조(**)를 쓰지 마세요.
+2. 본문: 핵심 사실만 불릿(줄 시작에 - 한 칸 띄우고)으로 3~6개. 각 불릿은 한두 문장.
+3. 중요한 이름·수치·결과는 **텍스트**로 강조하세요.
+4. 기사에 핵심 발언이 있으면 마지막에 짧게 한두 개만 직접 인용(큰따옴표)하세요. 없으면 생략합니다.
+5. 소제목(###), 구분선(---), 서론/맺음말 문단은 쓰지 마세요.
+
+[Strict Guidelines]
+1. 원문에 없는 내용을 덧붙이지 마세요(추측·외부 지식 금지). 수치·날짜·이름은 정확히 옮기세요.
+2. 확정된 사실과 보도·추측을 구분하세요. 이적설 등은 "{outlet}은 ~라고 보도했습니다", "~할 가능성이 있다고 전했습니다"처럼 매체에 귀속시키세요.
+3. 감정적 수식어를 배제하고 "~했습니다", "~로 전해졌습니다" 등 중립적인 경어체를 쓰세요.
+4. 고유명사는 외래어 표기법에 따라 쓰되 첫 언급 시 원어를 병기하세요. (예: 오이겐 폴란스키(Eugen Polanski))
+5. 축구 전문 용어는 한국 스포츠 미디어에서 통용되는 표현으로 옮기세요. (예: Startelf → 선발 라인업)
+6. 광고, 구독 안내, 관련기사 목록, 댓글, 작성자 소개 등 본문과 무관한 내용과 BMG와 무관한 다른 경기·팀 내용은 모두 제외하세요.
+7. 경기 시각이 있으면 독일 현지 시간과 한국 시간(KST)을 함께 표기하세요(시차 7시간 또는 8시간, 서머타임 고려).
+'''
+
+
+def summarize_article(raw_content, lang='de', outlet=''):
+    """외부 매체 기사를 한국어 불릿 요약으로 변환합니다(번역보다 출력 토큰이 훨씬 적음)."""
+    prompt = SUMMARY_PROMPT.format(outlet=outlet, lang_name=LANG_NAMES.get(lang, lang))
+    response = llm.invoke([SystemMessage(content=prompt), HumanMessage(content=raw_content)])
+    return _text(response)
+
+
+def translate_article(raw_content, lang='de', outlet=None):
     """
-    독일어 분데스리가(BMG) 기사를 한국어 스포츠 기사 형식으로 번역합니다.
+    분데스리가(BMG) 기사를 한국어 스포츠 기사 형식으로 번역합니다.
+    outlet이 주어지면 외부 매체 기사용 추가 규칙이 적용됩니다.
     """
+    lang_name = LANG_NAMES.get(lang, lang)
+    system_prompt = SYSTEM_PROMPT
+    if lang != 'de':
+        system_prompt = system_prompt.replace('독일어', lang_name)
+    if outlet:
+        system_prompt += EXTERNAL_RULES.format(outlet=outlet, lang_name=lang_name)
     messages = [
-        SystemMessage(content='''[Role]
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=raw_content),
+    ]
+    response = llm.invoke(messages)
+    return _text(response)
+
+
+SYSTEM_PROMPT = '''[Role]
 당신은 독일 분데스리가 '보루시아 묀헨글라트바흐(BMG)' 전담 스포츠 통신원입니다. 독일어 축구 기사를 한국어 독자들이 이질감 없이 읽을 수 있도록 정확하고 객관적으로 번역하며, 사실 관계를 왜곡하지 않는 것을 최우선 가치로 삼습니다.
 
 [Mission]
@@ -80,9 +144,65 @@ def translate_article(raw_content):
 [마커 보존 규칙 (매우 중요)]
 원문 중간에 `[[IMG:0]]`, `[[VID:0]]`처럼 대괄호 두 개로 감싸인 마커가 포함되어 있을 수 있습니다.
 이 마커는 원래 사진/영상이 있던 위치를 나타내는 시스템 표식이므로, 절대로 번역하거나 수정하거나 삭제하지 말고, 문장 흐름상 원문과 최대한 동일한 상대적 위치에 그대로 출력에 포함하세요. (예: 원문의 특정 문장 뒤에 있던 마커는 번역본에서도 해당 번역 문장 뒤에 그대로 와야 합니다.)
-'''),
-        HumanMessage(content=raw_content),
-    ]
+'''
 
-    response = llm.invoke(messages)
-    return response.content
+
+DEDUP_PROMPT = '''당신은 축구 뉴스 편집자입니다. [이미 올라간 기사] 목록은 이미 카페에 올라간 글입니다(구단 공식 사이트 기사, 그리고 앞서 올린 외부 매체 기사). [후보 기사] 각각이 이미 올라간 기사와 "사실상 같은 내용"인지 판단하세요.
+
+중복(duplicate)으로 보는 경우: 같은 경기의 결과 보도, 같은 기자회견/인터뷰/발표/공지, 같은 계약·부상·명단 소식처럼 공식 기사가 이미 핵심 정보를 모두 전달한 경우.
+중복이 아닌 경우: 선수 평점, 분석·칼럼, 다른 인물의 발언/관점, 이적설·추측, 이미 올라간 기사에 없는 새로운 사실이나 배경이 담긴 기사. 확신이 없으면 중복이 아닌 것으로 판단하세요.
+
+JSON만 출력하세요(설명·코드블록 금지): {"duplicates": [{"id": 후보번호, "official": 이미올라간기사번호}]}. 중복이 없으면 {"duplicates": []}.'''
+
+
+def find_duplicates(candidates, official):
+    """candidates: [{'title','lead'}], official: [{'title','lead'}]. 공식 기사와 중복인 후보의 {인덱스: 공식기사 인덱스}.
+    판별 실패 시 빈 dict(=아무것도 거르지 않음)."""
+    import json as _json
+    import re as _re
+    if not candidates or not official:
+        return {}
+    off = "\n".join(f"[{i}] {o['title']} — {o.get('lead', '')}" for i, o in enumerate(official))
+    cand = "\n".join(f"[{i}] {c['title']} — {c.get('lead', '')}" for i, c in enumerate(candidates))
+    try:
+        resp = llm.invoke([SystemMessage(content=DEDUP_PROMPT),
+                           HumanMessage(content=f"[이미 올라간 기사]\n{off}\n\n[후보 기사]\n{cand}")])
+        text = _text(resp)
+        data = _json.loads(_re.search(r"\{.*\}", text, _re.S).group(0))
+        return {int(d["id"]): int(d["official"]) for d in data.get("duplicates", [])
+                if 0 <= int(d["id"]) < len(candidates) and 0 <= int(d["official"]) < len(official)}
+    except Exception as e:
+        print(f"⚠️ 공식 기사 중복 판별 실패(거르지 않고 진행): {e}")
+        return {}
+
+
+GROUP_PROMPT = '''당신은 축구 뉴스 편집자입니다. 아래 [후보 기사]들 중 "사실상 같은 소식"을 다룬 기사끼리 묶으세요.
+
+같은 소식으로 보는 경우: 같은 경기의 결과·리뷰, 같은 기자회견/인터뷰/발표, 같은 계약·부상·이적 소식처럼 핵심 사실이 같은 기사.
+별개로 보는 경우: 같은 경기라도 선수 평점·전술 분석·칼럼·팬 반응처럼 다루는 내용이 뚜렷이 다른 기사, 서로 다른 인물의 발언, 새로운 사실을 더한 기사. 확신이 없으면 묶지 마세요.
+
+JSON만 출력하세요(설명·코드블록 금지): {"groups": [[후보번호, 후보번호, ...], ...]}. 2건 이상인 묶음만 포함하고, 한 기사는 한 묶음에만 넣으세요. 묶을 것이 없으면 {"groups": []}.'''
+
+
+def group_duplicates(candidates):
+    """candidates: [{'title','lead'}]. 같은 소식끼리 묶은 인덱스 리스트의 리스트. 실패 시 [](=아무것도 묶지 않음)."""
+    import json as _json
+    import re as _re
+    if len(candidates) < 2:
+        return []
+    cand = "\n".join(f"[{i}] {c['title']} — {c.get('lead', '')}" for i, c in enumerate(candidates))
+    try:
+        resp = llm.invoke([SystemMessage(content=GROUP_PROMPT), HumanMessage(content=f"[후보 기사]\n{cand}")])
+        text = _text(resp)
+        data = _json.loads(_re.search(r"\{.*\}", text, _re.S).group(0))
+        used, groups = set(), []
+        for g in data.get("groups", []):
+            ids = [int(i) for i in g if 0 <= int(i) < len(candidates) and int(i) not in used]
+            if len(ids) >= 2:
+                used.update(ids)
+                groups.append(ids)
+        return groups
+    except Exception as e:
+        print(f"⚠️ 매체 간 중복 판별 실패(거르지 않고 진행): {e}")
+        return []
+

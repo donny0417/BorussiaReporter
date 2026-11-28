@@ -3,15 +3,76 @@ import time
 import crawler
 import translator
 import uploader
+import config
+import external_news
+
+def run_external(token, official=None):
+    """외부 매체(Tavily) 기사 수집 → 번역 → 업로드. 실패해도 공식 뉴스 흐름에 영향 없음."""
+    print("🚀 외부 기사 수집 시작 (Tavily)...")
+    history = external_news.load_history()
+    articles = external_news.fetch(history, external_news.official_for_compare(official or [], history))
+
+    for i, art in enumerate(articles):
+        try:
+            if external_news.needs_full_translation(art):
+                translated = translator.translate_article(
+                    art['content'], lang=art['lang'], outlet=art['outlet'])
+                mode = '전문 번역'
+            else:
+                translated = translator.summarize_article(
+                    art['content'], lang=art['lang'], outlet=art['outlet'])
+                mode = '요약'
+            translated = external_news.format_title(translated, art['outlet'])
+            print(f"✅ [{art['outlet']}] {mode}: {art['title'][:40]}")
+        except Exception as e:
+            print(f"❌ 번역 실패 ({art['title']}): {e}")
+            external_news.record(history, art, 'failed')
+            continue
+
+        # 대표 사진 1장 (실패해도 사진 없이 게시)
+        if config.DRY_RUN:
+            image_path = None
+            print(f"🧪 [DRY_RUN] 대표 사진 URL: {external_news.fetch_lead_image(art['url'])}")
+        else:
+            image_path = external_news.download_lead_image(art['url'])
+        photo_line = f"\n📷 사진: {art['outlet']}" if image_path else ""
+        post = {
+            'translated_text': f"{translated}\n\n---\n원문 출처: {art['outlet']} - {art['url']}{photo_line}",
+            'image_path': image_path,
+        }
+        if config.DRY_RUN:
+            print(f"🧪 [DRY_RUN] {art['outlet']} 번역 결과:\n{post['translated_text'][:800]}\n")
+            continue  # DRY_RUN은 히스토리에 기록하지 않아 다시 테스트 가능
+        if not token:
+            external_news.record(history, art, 'failed')
+            continue
+        ok = uploader.upload_single_article(post, token, menu_id=config.menu_id_for(art['key']))
+        extra = None
+        if ok:   # 이후 실행에서 같은 소식을 다른 매체가 쓸 때 비교용(번역 제목 + 우리 요약 도입부만, 원문 아님)
+            entry = external_news.make_official_entry(art['title'], translated)
+            extra = {"compare_title": entry["title"], "compare_lead": entry["lead"]}
+        external_news.record(history, art, 'posted' if ok else 'failed', extra=extra)
+        print(f"{'✅' if ok else '❌'} 외부 기사 업로드 [{art['outlet']}] {art['title'][:40]}")
+        if i < len(articles) - 1:
+            time.sleep(10)
+
+    if not config.DRY_RUN:
+        external_news.save_history(history)
+
 
 async def main():
+    print(f"📌 게시 대상: {config.TARGET} / DRY_RUN={config.DRY_RUN}")
+    if config.TARGET != 'prod' and not config.TARGET_CLUB_ID and not config.DRY_RUN:
+        print("❌ NAVER_CLUB_ID_TEST/NAVER_MENU_ID_TEST 가 설정되지 않았습니다.")
+        return
+
     # 1. 뉴스 수집
     print("🚀 뉴스 수집 시작...")
     news_list = await crawler.get_borussia_news()
     
     if not news_list:
-        print("💤 새로운 뉴스가 없습니다.")
-        return
+        print("💤 새로운 공식 뉴스가 없습니다.")
+        news_list = []
 
     # 2. 번역 및 데이터 구성
     print(f"🚀 {len(news_list)}개의 기사 번역 시작...")
@@ -25,6 +86,7 @@ async def main():
                 'image_path': news['image_path'],
                 'images': news.get('images', []),
                 'videos': news.get('videos', []),
+                'official_entry': external_news.make_official_entry(news['title'], translated_text, news['link']),
             })
             print(f"✅ 번역 완료: {news['title']}")
         except Exception as e:
@@ -32,19 +94,38 @@ async def main():
 
     # 3. 네이버 카페 업로드
     print("🚀 카페 업로드 시작...")
-    token = uploader.get_naver_access_token()
-    
-    if token:
+    token = None if config.DRY_RUN else uploader.get_naver_access_token()
+    official_recent = external_news.load_official_recent()   # 외부 기사 중복 비교용(이번 실행 업로드분 포함)
+
+    if config.DRY_RUN:
+        for post in ready_to_post:
+            print(f"🧪 [DRY_RUN] 공식 기사:\n{post['translated_text'][:500]}\n")
+            official_recent.append(post['official_entry'])   # 저장은 하지 않고 이번 실행의 비교에만 사용
+    elif token:
         for i, post in enumerate(ready_to_post):
             success = uploader.upload_single_article(post, token)
             if success:
                 print(f"✅ 업로드 완료 [{i+1}/{len(ready_to_post)}]")
+                official_recent.append(post['official_entry'])
             else:
                 print(f"❌ 업로드 실패 [{i+1}/{len(ready_to_post)}]")
             
             if i < len(ready_to_post) - 1:
                 print("⏳ 10초 대기...")
                 time.sleep(10)
+
+    if not config.DRY_RUN:
+        external_news.save_official_recent(official_recent)
+
+    # 4. 외부 매체 기사 (격리: 실패해도 위 공식 뉴스 결과에 영향 없음)
+    if config.EXTERNAL_ENABLED:
+        if not config.DRY_RUN and not token:
+            token = uploader.get_naver_access_token()
+        try:
+            run_external(token, official_recent)
+        except Exception as e:
+            print(f"❌ 외부 기사 처리 중 오류: {e}")
+
 
 if __name__ == "__main__":
 
