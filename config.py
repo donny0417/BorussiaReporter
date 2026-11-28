@@ -15,6 +15,7 @@ NAVER_MENU_ID = os.getenv("NAVER_MENU_ID")
 TAVILY_API_KEY = (os.getenv("TAVILY_API_KEY") or "").strip().strip("\"'")
 EXTERNAL_ENABLED = os.getenv("EXTERNAL_ENABLED", "1") == "1"
 EXTERNAL_MAX_POSTS = int(os.getenv("EXTERNAL_MAX_POSTS", "5"))
+RESET_SKIPPED = os.getenv("RESET_SKIPPED", "0") == "1"  # 이전에 skipped로 기록된 URL을 다시 평가
 
 # --- 게시 대상 전환: 기본값 test (실수로 본 카페에 올라가는 것을 방지) ---
 TARGET = os.getenv("TARGET", "test").lower()

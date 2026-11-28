@@ -21,9 +21,16 @@ def run_external(token):
             external_news.record(history, art, 'failed')
             continue
 
+        # 대표 사진 1장 (실패해도 사진 없이 게시)
+        if config.DRY_RUN:
+            image_path = None
+            print(f"🧪 [DRY_RUN] 대표 사진 URL: {external_news.fetch_lead_image(art['url'])}")
+        else:
+            image_path = external_news.download_lead_image(art['url'])
+        photo_line = f"\n📷 사진: {art['outlet']}" if image_path else ""
         post = {
-            'translated_text': f"{translated}\n\n---\n원문 출처: {art['outlet']} - {art['url']}",
-            'image_path': None,
+            'translated_text': f"{translated}\n\n---\n원문 출처: {art['outlet']} - {art['url']}{photo_line}",
+            'image_path': image_path,
         }
         if config.DRY_RUN:
             print(f"🧪 [DRY_RUN] {art['outlet']} 번역 결과:\n{post['translated_text'][:800]}\n")

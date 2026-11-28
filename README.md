@@ -11,3 +11,5 @@ Translate articles from borussia.de and post it on Naver Cafe Borussia Park Kore
 
 외부 기사는 RP Online / Sky Sport(sport.sky.de) / Bild / Kicker 대상이며 유료(paywall) 기사는 건너뜁니다.
 처리한 URL 메타데이터만 `data/external_history.json`에 저장합니다(원문 미저장).
+
+외부 기사에는 기사 페이지의 대표 사진(og:image) 1장이 첨부됩니다(실패하면 사진 없이 게시). `RESET_SKIPPED=1`이면 이전에 유료/무관으로 스킵된 URL을 다시 평가합니다.

@@ -14,6 +14,10 @@ on:
         description: 'DRY_RUN (번역만 하고 업로드 안 함)'
         default: false
         type: boolean
+      reset_skipped:
+        description: '이전에 스킵(유료/무관)된 외부 기사를 다시 평가'
+        default: false
+        type: boolean
 
 jobs:
   build:
@@ -61,6 +65,7 @@ jobs:
         # 스케줄 실행은 inputs가 비어 TARGET 기본값(test)이 적용됨. 본 카페 전환은 아래 'test'를 'prod'로 변경
         TARGET: ${{ github.event.inputs.target || 'test' }}
         DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+        RESET_SKIPPED: ${{ github.event.inputs.reset_skipped == 'true' && '1' || '0' }}
       run: python main.py
 
     - name: Commit and Push History
