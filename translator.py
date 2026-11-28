@@ -22,6 +22,15 @@ llm = ChatGoogleGenerativeAI(
     rate_limiter=rate_limiter
 )
 
+def _text(response):
+    """모델 응답에서 텍스트만 꺼낸다. 최신 langchain은 content가 블록 리스트일 수 있어 .text를 쓴다
+    (구버전의 .text()는 메서드, 신버전은 프로퍼티라 둘 다 처리)."""
+    text = response.text
+    if not isinstance(text, str) and callable(text):   # 구버전: .text()가 메서드
+        text = text()
+    return str(text)
+
+
 EXTERNAL_RULES = '''
 
 [외부 매체 기사 추가 규칙]
@@ -60,7 +69,7 @@ def summarize_article(raw_content, lang='de', outlet=''):
     """외부 매체 기사를 한국어 불릿 요약으로 변환합니다(번역보다 출력 토큰이 훨씬 적음)."""
     prompt = SUMMARY_PROMPT.format(outlet=outlet, lang_name=LANG_NAMES.get(lang, lang))
     response = llm.invoke([SystemMessage(content=prompt), HumanMessage(content=raw_content)])
-    return response.content
+    return _text(response)
 
 
 def translate_article(raw_content, lang='de', outlet=None):
@@ -79,7 +88,7 @@ def translate_article(raw_content, lang='de', outlet=None):
         HumanMessage(content=raw_content),
     ]
     response = llm.invoke(messages)
-    return response.content
+    return _text(response)
 
 
 SYSTEM_PROMPT = '''[Role]
@@ -158,7 +167,7 @@ def find_duplicates(candidates, official):
     try:
         resp = llm.invoke([SystemMessage(content=DEDUP_PROMPT),
                            HumanMessage(content=f"[이미 올라간 기사]\n{off}\n\n[후보 기사]\n{cand}")])
-        text = resp.content if isinstance(resp.content, str) else str(resp.content)
+        text = _text(resp)
         data = _json.loads(_re.search(r"\{.*\}", text, _re.S).group(0))
         return {int(d["id"]): int(d["official"]) for d in data.get("duplicates", [])
                 if 0 <= int(d["id"]) < len(candidates) and 0 <= int(d["official"]) < len(official)}
@@ -184,7 +193,7 @@ def group_duplicates(candidates):
     cand = "\n".join(f"[{i}] {c['title']} — {c.get('lead', '')}" for i, c in enumerate(candidates))
     try:
         resp = llm.invoke([SystemMessage(content=GROUP_PROMPT), HumanMessage(content=f"[후보 기사]\n{cand}")])
-        text = resp.content if isinstance(resp.content, str) else str(resp.content)
+        text = _text(resp)
         data = _json.loads(_re.search(r"\{.*\}", text, _re.S).group(0))
         used, groups = set(), []
         for g in data.get("groups", []):
