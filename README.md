@@ -17,3 +17,5 @@ Translate articles from borussia.de and post it on Naver Cafe Borussia Park Kore
 외부 기사는 기본적으로 한국어 불릿 요약 + 원문 링크로 올라가며, 제목은 `[매체명] 제목` 형태이며 `<카테고리>` 태그는 붙이지 않습니다. 인터뷰·기자회견(제목/URL에 Interview, Stimmen, Pressekonferenz 등)은 전문 번역합니다. `EXTERNAL_MODE=full`(레포 Variables)이면 전부 전문 번역합니다.
 
 외부 기사는 게시 시각 기준 24시간 이내(`EXTERNAL_MAX_AGE_HOURS`)만 올립니다. 게시 시각은 Tavily 날짜에 시각이 없으면 기사 페이지 메타(article:published_time, JSON-LD 등)로 보강하며, 끝내 알 수 없으면 스킵합니다.
+
+RP Online은 Tavily 대신 `rp_scraper.py`로 직접 스크랩합니다(목록 JSON-LD → 기사 페이지의 게시 시각/`isAccessibleForFree`/본문). 목록을 못 읽으면 자동으로 Tavily로 대체됩니다. 라이브티커 기사는 제외합니다.

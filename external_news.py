@@ -15,6 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 
 import config
+import rp_scraper
 
 # 도메인 -> (표시명, 언어, 게시판 키). 게시판 키는 config.menu_id_for()의 환경변수 접미사로 쓰인다.
 OUTLETS = {
@@ -34,6 +35,7 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 
 MIN_SCORE = 0.4          # Tavily 관련도 점수 하한
 MIN_CONTENT_CHARS = 1500  # 이보다 짧으면 paywall로 잘린 것으로 간주
+MIN_TRUSTED_CHARS = 500  # 직접 스크랩 기사의 최소 본문 길이(속보성 짧은 기사 허용)
 MAX_CONTENT_CHARS = 12000  # 번역 토큰 상한
 HISTORY_LIMIT = 300
 
@@ -44,6 +46,7 @@ PAYWALL_RE = re.compile(
     r"WOW-Abo|Sky Sport Abo|Mit WOW weiterlesen",
     re.I,
 )
+LIVETICKER_RE = re.compile(r"live-?ticker", re.I)
 PAYWALL_URL_RE = re.compile(r"/plus/|bild-plus|/plus-|kicker-plus", re.I)
 
 
@@ -100,6 +103,14 @@ def classify(result):
     # 제목에 팀명이 없어도 URL(borussia-moenchengladbach 등)에 있으면 관련 기사로 본다
     if not RELEVANT_RE.search(f"{title} {url} {content[:3000]}"):
         return "skipped_irrelevant", "no BMG keyword"
+    if LIVETICKER_RE.search(title):  # 경기 중계 로그는 요약 가치가 낮다(경기 후 리뷰 기사가 따로 나옴)
+        return "skipped_irrelevant", "liveticker"
+    if result.get("_trusted"):  # 직접 스크랩: 사이트가 알려준 유료 플래그를 신뢰, 문구 휴리스틱은 쓰지 않음
+        if result.get("_paywalled"):
+            return "skipped_paywall", "isAccessibleForFree=false"
+        if len(content) < MIN_TRUSTED_CHARS:
+            return "skipped_paywall", f"short content len={len(content)}"
+        return None
     if PAYWALL_URL_RE.search(url):
         return "skipped_paywall", "paywall url pattern"
     m = PAYWALL_RE.search(f"{title} {content[:PAYWALL_HEAD_CHARS]}")
@@ -262,6 +273,25 @@ def download_lead_image(url):
 
 
 # ---------- 수집 ----------
+def _add_rp_candidates(candidates, seen):
+    """RP 기사를 직접 스크랩해 Tavily 결과와 같은 형태로 candidates에 넣는다. 스크랩 불가면 False."""
+    try:
+        arts = rp_scraper.collect(skip_urls=seen)
+    except Exception as e:
+        print(f"⚠️ RP 스크랩 오류: {e}")
+        return False
+    if arts is None:
+        return False
+    for a in arts:
+        candidates[a["url"]] = {
+            "url": a["url"], "title": a["title"], "raw_content": a["content"], "score": 1.0,
+            "published_date": a["published"] or "", "_trusted": True, "_paywalled": a["paywalled"],
+        }
+        # 대표 사진·게시 시각을 이미 알고 있으므로 기사 페이지를 다시 요청하지 않도록 캐시에 넣는다
+        _PAGE_CACHE[a["url"]] = {"image": a["image"], "published": a["published"]}
+    return True
+
+
 def _fill_missing_content(client, candidates):
     """Tavily 검색이 raw_content를 비워 보낸 기사(Bild/RP에서 자주 발생)를 extract API로 보충한다.
     제목/URL이 BMG 관련인 것만 대상으로 해 크레딧을 아끼며(5 URL당 1크레딧), 실패해도 조용히 넘어간다."""
@@ -305,7 +335,10 @@ def fetch(history=None):
     client = TavilyClient(api_key=config.TAVILY_API_KEY)
 
     candidates = {}
+    rp_ok = _add_rp_candidates(candidates, seen)   # 성공하면 RP는 Tavily 검색에서 제외(크레딧 절약)
     for domain in OUTLETS:
+        if domain == "rp-online.de" and rp_ok:
+            continue
         try:
             res = client.search(
                 query=QUERY,
