@@ -1,1 +1,42 @@
-[]
+[
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-ein-gladbach-star-verdient-sich-die-note-1-6b09b3653d0d9d6539f90814",
+  "title": "Ein Gladbach-Star verdient sich die Note 1 | Sport",
+  "outlet": "Bild",
+  "published": "",
+  "status": "skipped_paywall",
+  "recorded_at": "2026-11-28T11:09:07+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-rouven-schroeder-faellt-mohya-entscheidung-6afaf82b5dc4e94a2532b951",
+  "title": "Borussia Mönchengladbach fällt Entscheidung bei Klopp- ...",
+  "outlet": "Bild",
+  "published": "",
+  "status": "skipped_paywall",
+  "recorded_at": "2026-11-28T11:09:07+00:00"
+ },
+ {
+  "url": "https://www.bild.de/sport/fussball/borussia-moenchengladbach-kleindienst-effekt-geht-nach-hinten-los-6b0a6c697df78695bac965e8",
+  "title": "Kleindienst-Effekt geht nach hinten los | Sport",
+  "outlet": "Bild",
+  "published": "",
+  "status": "skipped_irrelevant",
+  "recorded_at": "2026-11-28T11:09:07+00:00"
+ },
+ {
+  "url": "https://sport.sky.de/fussball/artikel/moritz-nicolas-koennte-gladbach-im-winter-verlassen/13616920/34843",
+  "title": "Moritz Nicolas könnte Gladbach im Winter verlassen",
+  "outlet": "Sky Sport",
+  "published": "Thu, 26 Nov 2026 11:00:00 GMT",
+  "status": "skipped_paywall",
+  "recorded_at": "2026-11-28T11:09:07+00:00"
+ },
+ {
+  "url": "https://www.kicker.de/als-turm-kleindienst-vor-comeback-1275343/artikel",
+  "title": "\"Als Turm\": Kleindienst vor Comeback - kicker",
+  "outlet": "Kicker",
+  "published": "Thu, 26 Nov 2026 14:08:46 GMT",
+  "status": "posted",
+  "recorded_at": "2026-11-28T11:09:36+00:00"
+ }
+]
