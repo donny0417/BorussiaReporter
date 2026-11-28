@@ -107,6 +107,33 @@ def classify(result):
     return None
 
 
+# ---------- 처리 방식 결정 ----------
+# 인터뷰/기자회견은 발언 맥락이 중요하므로 전문 번역, 나머지는 요약
+FULL_TRANSLATION_RE = re.compile(
+    r"interview|\bstimmen\b|pressekonferenz|\bpk\b|spricht|im gespräch|im gespraech|"
+    r"exklusiv-interview|\bklartext\b|\bzitate\b",
+    re.I,
+)
+
+
+def needs_full_translation(article):
+    """True면 전문 번역, False면 요약. EXTERNAL_MODE=full이면 항상 전문 번역."""
+    if config.EXTERNAL_MODE == "full":
+        return True
+    return bool(FULL_TRANSLATION_RE.search(f"{article.get('title', '')} {article.get('url', '')}"))
+
+
+def format_title(text, outlet):
+    """첫 줄(제목)에서 모델이 붙였을 <카테고리> 태그·[매체명]을 지우고 '[매체명] 제목'으로 통일한다."""
+    head, _, rest = text.strip().partition("\n")
+    title = re.sub(r"^#+\s*", "", head).strip()
+    prev = None
+    while prev != title:  # <태그>, [대괄호 머리말]이 여러 개 붙은 경우까지 제거
+        prev = title
+        title = re.sub(r"^(<[^>\n]{1,20}>|\[[^\]\n]{1,30}\])\s*", "", title)
+    return f"## [{outlet}] {title}\n{rest}" if rest else f"## [{outlet}] {title}"
+
+
 # ---------- 대표 사진 ----------
 def fetch_lead_image(url):
     """기사 페이지의 og:image(없으면 twitter:image) URL을 반환. 실패하면 None."""

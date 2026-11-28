@@ -65,6 +65,7 @@ jobs:
         # 스케줄 실행은 inputs가 비어 TARGET 기본값(test)이 적용됨. 본 카페 전환은 아래 'test'를 'prod'로 변경
         TARGET: ${{ github.event.inputs.target || 'test' }}
         DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+        EXTERNAL_MODE: ${{ vars.EXTERNAL_MODE || 'summary' }}
         RESET_SKIPPED: ${{ github.event.inputs.reset_skipped == 'true' && '1' || '0' }}
       run: python main.py
 

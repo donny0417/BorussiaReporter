@@ -14,8 +14,16 @@ def run_external(token):
 
     for i, art in enumerate(articles):
         try:
-            translated = translator.translate_article(
-                art['content'], lang=art['lang'], outlet=art['outlet'])
+            if external_news.needs_full_translation(art):
+                translated = translator.translate_article(
+                    art['content'], lang=art['lang'], outlet=art['outlet'])
+                mode = '전문 번역'
+            else:
+                translated = translator.summarize_article(
+                    art['content'], lang=art['lang'], outlet=art['outlet'])
+                mode = '요약'
+            translated = external_news.format_title(translated, art['outlet'])
+            print(f"✅ [{art['outlet']}] {mode}: {art['title'][:40]}")
         except Exception as e:
             print(f"❌ 번역 실패 ({art['title']}): {e}")
             external_news.record(history, art, 'failed')

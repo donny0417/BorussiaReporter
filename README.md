@@ -13,3 +13,5 @@ Translate articles from borussia.de and post it on Naver Cafe Borussia Park Kore
 처리한 URL 메타데이터만 `data/external_history.json`에 저장합니다(원문 미저장).
 
 외부 기사에는 기사 페이지의 대표 사진(og:image) 1장이 첨부됩니다(실패하면 사진 없이 게시). `RESET_SKIPPED=1`이면 이전에 유료/무관으로 스킵된 URL을 다시 평가합니다.
+
+외부 기사는 기본적으로 한국어 불릿 요약 + 원문 링크로 올라가며, 제목은 `[매체명] 제목` 형태이며 `<카테고리>` 태그는 붙이지 않습니다. 인터뷰·기자회견(제목/URL에 Interview, Stimmen, Pressekonferenz 등)은 전문 번역합니다. `EXTERNAL_MODE=full`(레포 Variables)이면 전부 전문 번역합니다.
