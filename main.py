@@ -44,7 +44,7 @@ def run_external(token):
 async def main():
     print(f"📌 게시 대상: {config.TARGET} / DRY_RUN={config.DRY_RUN}")
     if config.TARGET != 'prod' and not config.TARGET_CLUB_ID and not config.DRY_RUN:
-        print("❌ TEST_NAVER_CLUB_ID/TEST_NAVER_MENU_ID 가 설정되지 않았습니다.")
+        print("❌ NAVER_CLUB_ID_TEST/NAVER_MENU_ID_TEST 가 설정되지 않았습니다.")
         return
 
     # 1. 뉴스 수집

@@ -46,8 +46,8 @@ jobs:
         NAVER_REFRESH_TOKEN: ${{ secrets.NAVER_REFRESH_TOKEN }}
         NAVER_CLUB_ID: ${{ secrets.NAVER_CLUB_ID }}
         NAVER_MENU_ID: ${{ secrets.NAVER_MENU_ID }}
-        TEST_NAVER_CLUB_ID: ${{ secrets.TEST_NAVER_CLUB_ID }}
-        TEST_NAVER_MENU_ID: ${{ secrets.TEST_NAVER_MENU_ID }}
+        NAVER_CLUB_ID_TEST: ${{ secrets.NAVER_CLUB_ID_TEST }}
+        NAVER_MENU_ID_TEST: ${{ secrets.NAVER_MENU_ID_TEST }}
         TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
         # 스케줄 실행은 inputs가 비어 TARGET 기본값(test)이 적용됨. 본 카페 전환은 아래 'test'를 'prod'로 변경
         TARGET: ${{ github.event.inputs.target || 'test' }}

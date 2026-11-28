@@ -18,12 +18,12 @@ EXTERNAL_MAX_POSTS = int(os.getenv("EXTERNAL_MAX_POSTS", "5"))
 # --- 게시 대상 전환: 기본값 test (실수로 본 카페에 올라가는 것을 방지) ---
 TARGET = os.getenv("TARGET", "test").lower()
 DRY_RUN = os.getenv("DRY_RUN", "0") == "1"
-TEST_NAVER_CLUB_ID = os.getenv("TEST_NAVER_CLUB_ID")
-TEST_NAVER_MENU_ID = os.getenv("TEST_NAVER_MENU_ID")
+NAVER_CLUB_ID_TEST = os.getenv("NAVER_CLUB_ID_TEST")
+NAVER_MENU_ID_TEST = os.getenv("NAVER_MENU_ID_TEST")
 if TARGET == "prod":
     TARGET_CLUB_ID, TARGET_MENU_ID = NAVER_CLUB_ID, NAVER_MENU_ID
 else:
-    TARGET_CLUB_ID, TARGET_MENU_ID = TEST_NAVER_CLUB_ID, TEST_NAVER_MENU_ID
+    TARGET_CLUB_ID, TARGET_MENU_ID = NAVER_CLUB_ID_TEST, NAVER_MENU_ID_TEST
 
 # [경로 설정 수정]
 # GitHub Actions 서버는 경로 구조가 다르므로 __file__을 기준으로 잡는 게 가장 안전합니다.
