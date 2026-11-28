@@ -21,3 +21,5 @@ Translate articles from borussia.de and post it on Naver Cafe Borussia Park Kore
 RP Online(`rp_scraper.py`)과 Bild(`bild_scraper.py`)는 Tavily 대신 직접 스크랩합니다(목록 → 기사 페이지의 게시 시각/`isAccessibleForFree`/본문). 목록을 못 읽으면 해당 매체는 자동으로 Tavily로 대체됩니다. Kicker(봇 차단)와 Sky(403)는 Tavily를 씁니다. 라이브티커 기사는 제외합니다.
 
 1회 업로드 상한은 `EXTERNAL_MAX_POSTS`(기본 8), 매체당 `EXTERNAL_MAX_PER_OUTLET`(기본 3)이며 매체별 라운드로빈으로 고릅니다. 전문 번역은 제목/URL에 Interview·Stimmen·Pressekonferenz·PK·im Gespräch가 있는 기사만 해당합니다.
+
+여러 매체가 같은 소식을 쓴 경우 `EXTERNAL_OUTLET_PRIORITY`(기본 `RP,KICKER,SKY,BILD`) 순서로 한 매체 기사만 남깁니다(인터뷰·기자회견 기사는 항상 우선).

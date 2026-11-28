@@ -15,6 +15,8 @@ NAVER_MENU_ID = os.getenv("NAVER_MENU_ID")
 TAVILY_API_KEY = (os.getenv("TAVILY_API_KEY") or "").strip().strip("\"'")
 EXTERNAL_ENABLED = os.getenv("EXTERNAL_ENABLED", "1") == "1"
 EXTERNAL_MAX_POSTS = int(os.getenv("EXTERNAL_MAX_POSTS", "8"))          # 1회 실행당 총 상한
+# 같은 소식을 여러 매체가 쓴 경우 남길 매체의 우선순위(왼쪽이 우선, 매체 키 기준)
+EXTERNAL_OUTLET_PRIORITY = [k.strip().upper() for k in os.getenv("EXTERNAL_OUTLET_PRIORITY", "RP,KICKER,SKY,BILD").split(",") if k.strip()]
 EXTERNAL_MAX_PER_OUTLET = int(os.getenv("EXTERNAL_MAX_PER_OUTLET", "3"))  # 매체당 상한(한 매체 쏠림 방지)
 # 외부 기사 처리 방식: summary(기본, 인터뷰/기자회견만 전문 번역) | full(전부 전문 번역)
 EXTERNAL_MODE = os.getenv("EXTERNAL_MODE", "summary").lower()

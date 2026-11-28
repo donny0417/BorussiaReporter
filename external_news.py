@@ -393,16 +393,23 @@ def drop_official_duplicates(passed, official, history):
     return keep
 
 
+def _outlet_rank(key):
+    """우선순위가 높을수록 큰 값(목록에 없는 매체는 가장 낮음)."""
+    order = config.EXTERNAL_OUTLET_PRIORITY
+    return len(order) - order.index(key) if key in order else 0
+
+
 def drop_cross_duplicates(passed, history):
     """통과한 (시각, 기사) 목록에서 매체끼리 같은 소식을 다룬 기사를 묶어 대표 1건만 남긴다(LLM 1회, 실패 시 그대로).
-    대표 선택: 인터뷰/기자회견(전문 번역 대상) 우선 → 본문이 긴 기사 → 최신."""
+    대표 선택: 인터뷰/기자회견(전문 번역 대상) 우선 → 매체 우선순위(RP > Kicker > Sky > Bild) → 본문이 긴 기사 → 최신."""
     if len(passed) < 2:
         return passed
     import translator
     cands = [{"title": a["title"], "lead": re.sub(r"\s+", " ", a["content"])[:300]} for _, a in passed]
     drop = set()
     for ids in translator.group_duplicates(cands):
-        best = max(ids, key=lambda i: (needs_full_translation(passed[i][1]), len(passed[i][1]["content"]), passed[i][0]))
+        best = max(ids, key=lambda i: (needs_full_translation(passed[i][1]), _outlet_rank(passed[i][1]["key"]),
+                                       len(passed[i][1]["content"]), passed[i][0]))
         for i in ids:
             if i != best:
                 drop.add(i)
